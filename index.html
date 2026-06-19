@@ -27,6 +27,8 @@ button{padding:8px 12px;border:none;border-radius:4px;cursor:pointer;color:#fff;
 .btn-edit{background:#4096ff}
 .btn-clear{background:#86909c}
 .btn-export{background:#1677ff}
+.btn-backup{background:#009688}
+.btn-import{background:#722ed1}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 table th,table td{border:1px solid #e5e6eb;padding:10px;text-align:center}
 table th{background:#f2f3f5}
@@ -64,11 +66,26 @@ table th{background:#f2f3f5}
     color: #f53f3f;
     font-weight: bold;
 }
+/* 隐藏文件输入 */
+#fileInput{
+    display: none;
+}
 </style>
 </head>
 <body>
 <!-- 居中主标题 -->
 <h1>物资出入库管理（恩施市CDC重大疾病科）</h1>
+
+<!-- 数据备份导入导出区域 -->
+<div class="box">
+<h2>数据迁移备份（跨电脑/手机同步）</h2>
+<div class="row">
+<button class="btn-backup" onclick="exportAllData()">导出全部库存+记录备份</button>
+<button class="btn-import" onclick="document.getElementById('fileInput').click()">导入备份文件</button>
+<input type="file" id="fileInput" accept=".json" onchange="importAllData(this)">
+<span style="color:#666">说明：导出生成json文件，复制到其他设备导入即可完整恢复所有数据</span>
+</div>
+</div>
 
 <!-- 入库区域 -->
 <div class="box">
@@ -154,7 +171,7 @@ table th{background:#f2f3f5}
 <div class="box">
 <div class="row" style="justify-content: space-between;align-items:center;">
 <h2>出入库操作记录</h2>
-<button class="btn-export" onclick="exportRecord()">导出全部出入库记录</button>
+<button class="btn-export" onclick="exportRecord()">导出记录CSV（Excel打开）</button>
 </div>
 <table id="record_table">
 <thead>
@@ -176,8 +193,7 @@ table th{background:#f2f3f5}
 </div>
 
 <script>
-// 存储说明：当前纯前端本地存储(localStorage)仅当前浏览器可用，多人员、多电脑无法自动共享数据
-// 如需多人共用实时共享：需搭配后端服务+数据库（Java/PHP/Python等）
+// 存储说明：当前纯前端本地存储(localStorage)仅当前浏览器可用，通过导入导出实现多设备迁移
 const STOCK_KEY = "stock_data";
 const RECORD_KEY = "record_data";
 let editKey = "";
@@ -192,6 +208,62 @@ function getStorage(key){
 function setStorage(key,val){
     localStorage.setItem(key,JSON.stringify(val));
 }
+
+// ====================== 新增：完整数据导入导出 ======================
+// 导出全部库存+记录备份json
+function exportAllData(){
+    let stock = getStorage(STOCK_KEY);
+    let records = getStorage(RECORD_KEY);
+    const backupData = {
+        stock: stock,
+        records: records,
+        exportTime: new Date().toLocaleString(),
+        desc: "恩施市CDC重大疾病科物资系统完整备份"
+    };
+    const jsonStr = JSON.stringify(backupData,null,2);
+    const blob = new Blob([jsonStr],{type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `物资系统完整备份_${new Date().toLocaleDateString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert("完整数据备份导出成功，请保存json文件用于其他设备导入");
+}
+
+// 导入备份json文件
+function importAllData(fileDom){
+    const file = fileDom.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+        try{
+            const data = JSON.parse(e.target.result);
+            if(!data.stock || !data.records){
+                alert("备份文件格式错误，无法识别");
+                return;
+            }
+            if(!confirm("导入会覆盖当前页面所有库存和记录，确定继续？")) return;
+            // 覆盖本地存储
+            setStorage(STOCK_KEY, data.stock);
+            setStorage(RECORD_KEY, data.records);
+            // 刷新全部页面数据
+            loadType();
+            renderStock();
+            renderRecord();
+            alert("数据导入完成！库存和出入库记录已全部恢复");
+        }catch(err){
+            alert("文件解析失败，请选择正确的备份json文件");
+            console.error(err);
+        }
+    }
+    reader.readAsText(file);
+    // 清空文件选择框，防止重复选同一文件无触发
+    fileDom.value = "";
+}
+// =================================================================
 
 // 单位输入框切换
 function toggleCustomDept(){
