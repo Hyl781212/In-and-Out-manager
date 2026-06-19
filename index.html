@@ -7,16 +7,20 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft Yahei",sans-serif;font-size:14px}
 body{max-width:100%;margin:10px auto;padding:0 8px;background:#f5f7fa}
-h1{
+/* 标题样式修改 */
+.main-title{
     text-align: center;
-    margin: 15px 0;
-    font-size: 18px;
-    font-weight: normal;
-    color: #222;
-}
-.title-main{
     font-size: 20px;
     font-weight: bold;
+    margin:15px 0 4px 0;
+    color:#222;
+}
+.sub-title{
+    text-align: center;
+    font-size: 16px;
+    font-weight: normal;
+    margin-bottom:15px;
+    color:#333;
 }
 h2{margin:8px 0;color:#222;font-size:16px}
 .box{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 6px #ddd;margin-bottom:15px}
@@ -25,7 +29,7 @@ input,select{padding:6px 4px;border:1px solid #ccc;border-radius:4px;font-size:1
 input[readonly]{background:#eee;color:#666}
 .hide{display:none!important}
 .edit-tip{color:#f53f3f;font-weight:bold}
-button{padding:7px 10px;border:none;border-radius:4px;cursor:pointer;color:#fff;font-size:13px;white-space:nowrap}
+button{padding:7 10px;border:none;border-radius:4px;cursor:pointer;color:#fff;font-size:13px;white-space:nowrap}
 .btn-in{background:#00b42a}
 .btn-out{background:#ff7700}
 .btn-del{background:#f53f3f}
@@ -52,7 +56,7 @@ table th{background:#f2f3f5}
 
 /* 编辑弹窗样式 */
 .modal-mask{
-    position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:999;
+    position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0.5);display:none;align-items:center;justify-content:center;z-index:999;
 }
 .modal-box{
     background:#fff;width:92%;max-width:520px;padding:16px;border-radius:8px;max-height:90vh;overflow-y:auto;
@@ -64,7 +68,8 @@ table th{background:#f2f3f5}
 </style>
 </head>
 <body>
-<h1><span class="title-main">物资出入库管理</span>（恩施市CDC重大疾病科）</h1>
+<div class="main-title">物资出入库管理</div>
+<div class="sub-title">（恩施市CDC重大疾病科）</div>
 
 <div class="box">
 <h2>数据备份/迁移</h2>
@@ -107,11 +112,11 @@ table th{background:#f2f3f5}
 <input readonly id="out_valid_show" placeholder="效期截止日">
 <select id="out_dept" onchange="toggleCustomDept()">
 <option value="">领用单位</option>
-<option value="舞阳">舞阳</option>
+<option value="舞阳坝">舞阳坝</option>
 <option value="小渡船">小渡船</option>
 <option value="金子坝">金子坝</option>
 <option value="七里坪">七里坪</option>
-<option value="六角">六角</option>
+<option value="六角亭">六角亭</option>
 <option value="三岔">三岔</option>
 <option value="新塘">新塘</option>
 <option value="红土">红土</option>
@@ -126,7 +131,6 @@ table th{background:#f2f3f5}
 <option value="龙凤">龙凤</option>
 <option value="太阳">太阳</option>
 <option value="白杨">白杨</option>
-<option value="市医院">市医院</option>
 <option value="其他">其他</option>
 </select>
 <input type="text" id="custom_dept" class="hide" placeholder="填写单位">
@@ -162,7 +166,6 @@ table th{background:#f2f3f5}
 <h2>出入库操作记录</h2>
 <div class="row">
 <button class="btn-export" onclick="exportRecord()">导出CSV报表</button>
-<button class="btn-del" onclick="clearAllStock()" style="margin-left:6px">清空全部库存</button>
 <button class="btn-del" onclick="delAllRecords()" style="margin-left:6px">删除全部记录</button>
 </div>
 </div>
@@ -259,7 +262,7 @@ function getDayDiff(startDateStr, endDateStr){
     const start = new Date(startDateStr);
     const end = new Date(endDateStr);
     const diffTime = end - start;
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.ceil(diffTime / (1000 * 60 * 24));
 }
 
 // 计算相差整月
@@ -545,7 +548,7 @@ function openEditModal(index){
     document.getElementById("editNum").value = item.num;
     document.getElementById("editValid").value = item.validDate || "";
     document.getElementById("editDept").value = item.dept || "";
-    document.getElementById("editUser").value = item.user || "";
+    document.getElementById("editUser").value = item.user;
     document.getElementById("editNote").value = item.note || "";
     document.getElementById("editModal").style.display = "flex";
 }
@@ -600,7 +603,6 @@ function saveEditRecord(){
     }else{
         if(stock[newKey].num < newNum){
             alert("修改后出库数量不能大于现有库存，请调整");
-            // 恢复旧库存
             setStorage(STOCK_KEY, stock);
             renderStock();renderRecord();
             return;
@@ -677,15 +679,12 @@ function renderStock(){
         if(validDate){
             const dayLeft = getDayDiff(today, validDate);
             if(dayLeft < 0){
-                // 已过期
                 validText = "已过期";
                 validClass = "low-valid";
             }else if(dayLeft < 30){
-                // 不足1个月，显示天数
                 validText = dayLeft + " 天 近效期！";
                 validClass = "low-valid";
             }else{
-                // 大于等于1个月，显示月份
                 const monthLeft = getMonthDiff(today, validDate);
                 validText = monthLeft + " 个月";
                 if(monthLeft < 3){
@@ -694,7 +693,7 @@ function renderStock(){
                 }
             }
         }
-        // 库存操作列无按钮
+
         tbody.innerHTML += `
         <tr>
             <td>${item.type}</td>
@@ -734,12 +733,6 @@ function renderRecord(){
             </td>
         </tr>`;
     })
-}
-
-function clearAllStock(){
-    if(!confirm("确定清空全部库存？数据无法找回")) return;
-    setStorage(STOCK_KEY,{});
-    renderStock();loadType();
 }
 
 function exportRecord(){
