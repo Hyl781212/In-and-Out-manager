@@ -48,7 +48,7 @@ table th{background:#f2f3f5}
 #out_user {width: 80px;min-width: 80px;}
 #in_valid_date {width: 130px;min-width:130px;}
 #out_valid_show {width:120px;min-width:120px;}
-#in_type,#in_factory,#in_spec,#custom_dept,#out_note {min-width: 110px;}
+#in_type,#in_factory,#in_spec,#in_note,#custom_dept,#out_note {min-width: 110px;}
 .low-stock {color: #f53f3f;font-weight: bold;}
 .low-valid {color: #f53f3f;font-weight: bold;}
 #fileInput{display: none;}
@@ -78,7 +78,7 @@ table th{background:#f2f3f5}
 <button class="btn-import" onclick="document.getElementById('fileInput').click()">导入备份文件</button>
 <input type="file" id="fileInput" accept=".json" onchange="importAllData(this)">
 </div>
-<span style="color:#666;font-size:12px">提示：导出文件在微信【我-文件-下载】，请勿转发文件，转发会损坏无法导入</span>
+<span style="color:#666;font-size:12px">提示：微信关闭页面缓存会丢失数据，建议经常导出备份</span>
 </div>
 
 <div class="box">
@@ -155,6 +155,7 @@ table th{background:#f2f3f5}
 <th>有效期(月)</th>
 <th>操作</th>
 </tr>
+</thead>
 <tbody></tbody>
 </table>
 </div>
@@ -183,6 +184,7 @@ table th{background:#f2f3f5}
 <th>类型</th>
 <th>备注</th>
 <th>操作</th>
+</tr>
 </thead>
 <tbody></tbody>
 </table>
@@ -274,7 +276,7 @@ function getMonthDiff(startDateStr, endDateStr){
     return months;
 }
 
-// 导出备份
+// 导出备份（修复无弹窗、兼容微信）
 function exportAllData(){
     let stock = getStorage(STOCK_KEY);
     let records = getStorage(RECORD_KEY);
@@ -294,10 +296,10 @@ function exportAllData(){
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    alert("备份文件已下载！\n查找：微信【我】→【文件】→【下载】\n⚠ 警告：文件不要转发他人，转发会损坏无法导入");
+    alert("备份文件已下载，微信请在文件管理查找");
 }
 
-// 修复导入：强制UTF8读取，多重校验，捕获所有解析异常
+// 【修复导入核心逻辑】增加容错、清空文件input、强制刷新页面渲染
 function importAllData(fileDom){
     const file = fileDom.files[0];
     if(!file){
@@ -306,38 +308,38 @@ function importAllData(fileDom){
     }
     const reader = new FileReader();
     reader.onerror = function(){
-        alert("文件读取失败：文件损坏/微信传输破坏，请重新导出备份");
+        alert("文件读取失败，请更换备份文件重试");
         fileDom.value = "";
     };
-    // 强制UTF8编码读取，解决中文乱码解析失败
-    reader.readAsText(file,"UTF-8");
     reader.onload = function(e){
         try{
-            const rawText = e.target.result.trim();
-            if(!rawText){
-                throw new Error("文件为空，损坏");
+            const text = e.target.result.trim();
+            if(!text){
+                throw new Error("文件为空");
             }
-            const data = JSON.parse(rawText);
-            // 严格校验备份必备字段
-            if(typeof data.stock === "undefined" || typeof data.records === "undefined"){
-                throw new Error("缺少stock/records字段，不是本页面导出备份");
+            const data = JSON.parse(text);
+            // 校验备份文件格式
+            if(!data.hasOwnProperty("stock") || !data.hasOwnProperty("records")){
+                throw new Error("文件不是本系统标准备份");
             }
-            if(!confirm("导入会覆盖当前所有库存、记录，确定继续？")){
+            if(!confirm("导入会覆盖当前所有数据，确定？")){
                 fileDom.value = "";
                 return;
             }
             setStorage(STOCK_KEY, data.stock);
             setStorage(RECORD_KEY, data.records);
+            // 强制刷新全部页面数据
             loadType();
             renderStock();
             renderRecord();
-            alert("✅导入成功，数据已刷新");
+            alert("数据导入完成！");
         }catch(err){
-            alert(`❌导入失败：${err.message}\n解决方法：返回页面重新导出备份，不要转发文件`);
+            alert("导入失败：" + err.message + "，请使用本系统导出的json备份");
         }
-        // 清空输入框，支持重复选同一文件
+        // 关键修复：清空文件输入框，允许重复选择同一文件
         fileDom.value = "";
     };
+    reader.readAsText(file,"UTF-8");
 }
 
 function toggleCustomDept(){
@@ -383,19 +385,20 @@ function loadType(){
         let t = trimAll(stock[k].type);
         if(t) types.add(t);
     }
-    types.forEach(t=>type.innerHTML += `<option value="${t}">${t}</option>`);
+    types.forEach(t=>typeSel.innerHTML += `<option value="${t}">${t}</option>`);
     document.getElementById("out_factory").innerHTML = "<option value=''>请选择厂家</option>";
     document.getElementById("out_spec").innerHTML = "<option value=''>请选择规格</option>";
     clearOutValid();
 }
 function loadFactory(){
+    let selType = trimAll(document.getElementById("out_type").value);
     let stock = getStorage(STOCK_KEY);
     let facSel = document.getElementById("out_factory");
     facSel.innerHTML = "<option value=''>请选择厂家</option>";
     let facs = new Set();
     for(let k in stock){
         let item = stock[k];
-        if(trimAll(item.type) === trimAll(document.getElementById("out_type").value)) facs.add(trimAll(item.factory));
+        if(trimAll(item.type) === selType) facs.add(trimAll(item.factory));
     }
     facs.forEach(f=>facSel.innerHTML += `<option value="${f}">${f}</option>`);
     document.getElementById("out_spec").innerHTML = "<option value=''>请选择规格</option>";
@@ -532,6 +535,7 @@ function delRec(idx){
     let stock = getStorage(STOCK_KEY);
     let stockItem = stock[key];
     if(!confirm("删除本条记录，库存同步回滚，确定？")) return;
+    // 撤销本条记录库存变动
     if(recItem.opt === "入库"){
         if(stockItem){
             stockItem.num -= recItem.num;
@@ -575,6 +579,7 @@ function saveEditRecord(){
     const idx = Number(document.getElementById("editIndex").value);
     const records = getStorage(RECORD_KEY);
     const oldItem = records[idx];
+    // 先撤销旧记录对库存的影响
     const oldKey = `${trimAll(oldItem.type)}_${trimAll(oldItem.factory)}_${trimAll(oldItem.spec)}`;
     let stock = getStorage(STOCK_KEY);
     let oldStockItem = stock[oldKey];
@@ -592,6 +597,7 @@ function saveEditRecord(){
     }
     setStorage(STOCK_KEY, stock);
 
+    // 获取新数据
     const newOpt = document.getElementById("editOptType").value;
     const newType = trimAll(document.getElementById("editType").value);
     const newFac = trimAll(document.getElementById("editFactory").value);
@@ -606,6 +612,7 @@ function saveEditRecord(){
         return;
     }
     const newKey = `${newType}_${newFac}_${newSpec}`;
+    // 应用新记录库存变动
     stock = getStorage(STOCK_KEY);
     if(!stock[newKey]) stock[newKey] = {type:newType,factory:newFac,spec:newSpec,num:0,validDate:newValid};
     if(newOpt === "入库"){
@@ -619,10 +626,11 @@ function saveEditRecord(){
             return;
         }
         stock[newKey].num -= newNum;
-        stock[newKey].valid = newValid;
+        stock[newKey].validDate = newValid;
         if(stock[newKey].num <=0) delete stock[newKey];
     }
     setStorage(STOCK_KEY, stock);
+    // 替换记录
     records[idx] = {
         time:oldItem.time,
         type:newType,
