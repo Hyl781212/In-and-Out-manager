@@ -25,11 +25,11 @@ body{max-width:100%;margin:10px auto;padding:0 8px;background:#f5f7fa}
 h2{margin:8px 0;color:#222;font-size:16px}
 .box{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 6px #ddd;margin-bottom:15px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
-input,select{padding:6px 4px;border:1px solid #ccc;border-radius:4px;font-size:14px}
+input,select,label{padding:6px 4px;border:1px solid #ccc;border-radius:4px;font-size:14px}
 input[readonly]{background:#eee;color:#666}
 .hide{display:none!important}
 .edit-tip{color:#f53f3f;font-weight:bold}
-button{padding:7 10px;border:none;border-radius:4px;cursor:pointer;color:#fff;font-size:13px;white-space:nowrap}
+button{padding:7px 10px;border:none;border-radius:4px;cursor:pointer;color:#fff;font-size:13px;white-space:nowrap}
 .btn-in{background:#00b42a}
 .btn-out{background:#ff7700}
 .btn-del{background:#f53f3f}
@@ -52,7 +52,7 @@ table th{background:#f2f3f5}
 .low-stock {color: #f53f3f;font-weight: bold;}
 .low-valid {color: #f53f3f;font-weight: bold;}
 #fileInput{display: none;}
-.table-wrap{overflow-x:auto;}
+.table-wrap{overflow-x:auto; -webkit-overflow-scrolling: touch;}
 
 /* 编辑弹窗样式 */
 .modal-mask{
@@ -62,7 +62,7 @@ table th{background:#f2f3f5}
     background:#fff;width:92%;max-width:520px;padding:16px;border-radius:8px;max-height:90vh;overflow-y:auto;
 }
 .modal-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center}
-.modal-row label{width:90px;text-align:right}
+.modal-row label{width:90px;text-align:right;border:none;padding:0}
 .modal-row input,.modal-row select{flex:1;min-width:120px}
 .modal-btns{display:flex;gap:10px;justify-content:center;margin-top:16px}
 </style>
@@ -88,7 +88,7 @@ table th{background:#f2f3f5}
 <input type="text" id="in_factory" placeholder="厂家">
 <input type="text" id="in_spec" placeholder="规格">
 <input type="number" id="in_num" placeholder="数量" min="1">
-<input type="date" id="in_valid_date">
+<label>效期</label><input type="date" id="in_valid_date">
 <input type="text" id="in_note" placeholder="备注">
 <button class="btn-in" onclick="stockIn()">确认入库</button>
 <button class="btn-clear" onclick="clearInInput()">清空</button>
@@ -262,7 +262,7 @@ function getDayDiff(startDateStr, endDateStr){
     const start = new Date(startDateStr);
     const end = new Date(endDateStr);
     const diffTime = end - start;
-    return Math.ceil(diffTime / (1000 * 60 * 24));
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
 // 计算相差整月
@@ -276,6 +276,7 @@ function getMonthDiff(startDateStr, endDateStr){
     return months;
 }
 
+// 导出备份（修复无弹窗、兼容微信）
 function exportAllData(){
     let stock = getStorage(STOCK_KEY);
     let records = getStorage(RECORD_KEY);
@@ -298,30 +299,47 @@ function exportAllData(){
     alert("备份文件已下载，微信请在文件管理查找");
 }
 
+// 【修复导入核心逻辑】增加容错、清空文件input、强制刷新页面渲染
 function importAllData(fileDom){
     const file = fileDom.files[0];
-    if(!file) return;
+    if(!file){
+        fileDom.value = "";
+        return alert("未选择文件");
+    }
     const reader = new FileReader();
+    reader.onerror = function(){
+        alert("文件读取失败，请更换备份文件重试");
+        fileDom.value = "";
+    };
     reader.onload = function(e){
         try{
-            const data = JSON.parse(e.target.result);
-            if(!data.stock || !data.records){
-                alert("文件格式错误，非本系统备份");
+            const text = e.target.result.trim();
+            if(!text){
+                throw new Error("文件为空");
+            }
+            const data = JSON.parse(text);
+            // 校验备份文件格式
+            if(!data.hasOwnProperty("stock") || !data.hasOwnProperty("records")){
+                throw new Error("文件不是本系统标准备份");
+            }
+            if(!confirm("导入会覆盖当前所有数据，确定？")){
+                fileDom.value = "";
                 return;
             }
-            if(!confirm("导入会覆盖当前所有数据，确定？")) return;
             setStorage(STOCK_KEY, data.stock);
             setStorage(RECORD_KEY, data.records);
+            // 强制刷新全部页面数据
             loadType();
             renderStock();
             renderRecord();
-            alert("数据导入完成");
+            alert("数据导入完成！");
         }catch(err){
-            alert("文件解析失败，请选择正确json备份");
+            alert("导入失败：" + err.message + "，请使用本系统导出的json备份");
         }
-    }
-    reader.readAsText(file);
-    fileDom.value = "";
+        // 关键修复：清空文件输入框，允许重复选择同一文件
+        fileDom.value = "";
+    };
+    reader.readAsText(file,"UTF-8");
 }
 
 function toggleCustomDept(){
@@ -548,7 +566,7 @@ function openEditModal(index){
     document.getElementById("editNum").value = item.num;
     document.getElementById("editValid").value = item.validDate || "";
     document.getElementById("editDept").value = item.dept || "";
-    document.getElementById("editUser").value = item.user;
+    document.getElementById("editUser").value = item.user || "";
     document.getElementById("editNote").value = item.note || "";
     document.getElementById("editModal").style.display = "flex";
 }
