@@ -51,7 +51,7 @@ table th{background:#f2f3f5}
 </head>
 <body>
 <div class="main-title">物资出入库管理</div>
-<div class="sub-title">（恩施市CDC重大疾病科）</div>
+<div class="sub-title">（恩施市CDC重大疾病科制作）</div>
 
 <div class="box">
 <h2>数据备份/迁移</h2>
@@ -271,6 +271,17 @@ function getMonthDiff(s,e){
     return m;
 }
 
+// 新增：清理库存中数量≤0的项
+function cleanZeroStock() {
+    const stock = getStorage(STOCK_KEY);
+    for (let k in stock) {
+        if (stock[k].num <= 0) {
+            delete stock[k];
+        }
+    }
+    setStorage(STOCK_KEY, stock);
+}
+
 // 导出备份
 function exportAllData(){
     const stock=getStorage(STOCK_KEY);
@@ -297,6 +308,8 @@ function importAllData(dom){
             if(!confirm("导入覆盖现有数据？")){dom.value="";return;}
             setStorage(STOCK_KEY,data.stock);
             setStorage(RECORD_KEY,data.records);
+            // 导入后清理0库存
+            cleanZeroStock();
             loadType();renderStock();renderRecord();
             alert("导入成功");
         }catch(err){alert("文件损坏");}
@@ -387,6 +400,8 @@ function stockIn(){
     if(editKey&&editKey!==key)delete stock[editKey];
     stock[key]={type:t,factory:f,spec:spec,num:num,validDate:valid};
     setStorage(STOCK_KEY,stock);
+    // 入库后清理0库存
+    cleanZeroStock();
     const records=getStorage(RECORD_KEY);
     records.unshift({
         time:formatShow(""),rawTime:getNowDate(),
@@ -414,8 +429,11 @@ function stockOut(){
         const key=`${t}_${f}_${spec}`;
         const stock=getStorage(STOCK_KEY);
         stock[key].num-=num;
-        if(stock[key].num<=0)delete stock[key];
+        // 确保库存为0时删除
+        if(stock[key].num <= 0) delete stock[key];
         setStorage(STOCK_KEY,stock);
+        // 出库后清理0库存
+        cleanZeroStock();
         const records=getStorage(RECORD_KEY);
         records.unshift({
             time:formatShow(dVal),rawTime:dVal||getNowDate(),
@@ -441,6 +459,8 @@ function delRec(idx){
         stock[k].num+=item.num;
     }
     setStorage(STOCK_KEY,stock);
+    // 删除记录后清理0库存
+    cleanZeroStock();
     records.splice(idx,1);
     setStorage(RECORD_KEY,records);
     renderStock();renderRecord();loadType();
@@ -487,9 +507,12 @@ function saveEditRecord(){
     let stock=getStorage(STOCK_KEY);
     // 撤销旧数据
     if(old.opt==="入库"){
-        if(stock[oldKey]){stock[oldKey].num-=old.num;if(stock[oldKey]<=0)delete stock[oldKey];}
+        if(stock[oldKey]){
+            stock[oldKey].num-=old.num;
+            if(stock[oldKey].num<=0) delete stock[oldKey];
+        }
     }else{
-        if(!stock[oldKey])stock[oldKey]={type:old.type,factory:old.factory,spec:old.spec,num:0,validDate:old.validDate};
+        if(!stock[oldKey]) stock[oldKey]={type:old.type,factory:old.factory,spec:old.spec,num:0,validDate:old.validDate};
         stock[oldKey].num+=old.num;
     }
     setStorage(STOCK_KEY,stock);
@@ -506,15 +529,17 @@ function saveEditRecord(){
     if(!t||!f||!spec||num<=0){alert("信息不全");return;}
     const newKey=`${t}_${f}_${spec}`;
     stock=getStorage(STOCK_KEY);
-    if(!stock[newKey])stock[newKey]={type:t,factory:f,spec:spec,num:0,validDate:valid};
+    if(!stock[newKey]) stock[newKey]={type:t,factory:f,spec:spec,num:0,validDate:valid};
     if(document.getElementById("editOptType").value==="入库"){
         stock[newKey].num+=num;
     }else{
         if(stock[newKey].num<num){alert("库存不足");return;}
         stock[newKey].num-=num;
-        if(stock[newKey]<=0)delete stock[newKey];
+        if(stock[newKey].num<=0) delete stock[newKey];
     }
     setStorage(STOCK_KEY,stock);
+    // 编辑后清理0库存
+    cleanZeroStock();
     records[idx]={
         time:formatShow(dVal),rawTime:dVal||getNowDate(),
         type:t,factory:f,spec:spec,num:num,validDate:valid,
@@ -526,6 +551,8 @@ function saveEditRecord(){
 }
 // 渲染库存（无操作按钮）
 function renderStock(){
+    // 渲染前先清理0库存
+    cleanZeroStock();
     const today=getNowDate();
     const stock=getStorage(STOCK_KEY);
     const tbody=document.querySelector("#stock_table tbody");
@@ -597,6 +624,8 @@ function exportRecord(){
     URL.revokeObjectURL(url);
 }
 window.onload=function(){
+    // 页面加载时先清理0库存
+    cleanZeroStock();
     loadType();renderStock();renderRecord();
 }
 </script>
