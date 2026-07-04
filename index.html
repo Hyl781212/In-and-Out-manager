@@ -71,7 +71,7 @@ table th{background:#f2f3f5}
 <input type="text" id="in_spec" placeholder="规格">
 <input type="number" id="in_num" placeholder="数量" min="1">
 <label>效期</label><input type="date" id="in_valid_date">
-<input type="text" id="in_note" placeholder="备注">
+<input type="text" id="in_note" placeholder="经办人">
 <button class="btn-in" onclick="stockIn()">确认入库</button>
 <button class="btn-clear" onclick="clearInInput()">清空</button>
 </div>
@@ -118,7 +118,7 @@ table th{background:#f2f3f5}
 </select>
 <input type="text" id="custom_dept" class="hide" placeholder="填写单位">
 <input type="text" id="out_user" placeholder="领用人">
-<input id="out_note" placeholder="备注">
+<input id="out_note" placeholder="经办人">
 <input readonly id="show_stock" placeholder="库存">
 <button class="btn-out" onclick="stockOut()">确认出库</button>
 <button class="btn-clear" onclick="resetOut()">清空</button>
@@ -164,7 +164,7 @@ table th{background:#f2f3f5}
 <th>领用单位</th>
 <th>领用人</th>
 <th>类型</th>
-<th>备注</th>
+<th>经办人</th>
 <th>操作</th>
 </tr>
 <tbody></tbody>
@@ -217,7 +217,7 @@ table th{background:#f2f3f5}
             <input type="text" id="editUser">
         </div>
         <div class="modal-row">
-            <label>备注</label>
+            <label>经办人</label>
             <input type="text" id="editNote">
         </div>
         <div class="modal-btns">
@@ -609,7 +609,7 @@ function renderRecord(){
 function exportRecord(){
     const records=getStorage(RECORD_KEY);
     if(records.length===0){alert("无记录");return;}
-    let csv="操作时间,类别,厂家,规格,数量,效期截止日,时间,领用单位,领用人,类型,备注\n";
+    let csv="操作时间,类别,厂家,规格,数量,效期截止日,时间,领用单位,领用人,类型,经办人\n";
     records.forEach(it=>{
         const v=it.validDate||"";
         const d=it.outTime?formatShow(it.outTime):"";
