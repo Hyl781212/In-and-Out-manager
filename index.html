@@ -51,7 +51,10 @@ table th{background:#f2f3f5}
 </head>
 <body>
 <div class="main-title">物资出入库管理</div>
-<div class="sub-title">（恩施市CDC重大疾病科制作）</div>
+<div class="sub-title" style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">
+    <span>（恩施市CDC重大疾病科制作）科室名称：</span>
+    <input id="deptNameInput" type="text" maxlength="15" style="width:180px;padding:4px;border:1px solid #ccc;border-radius:4px;">
+</div>
 
 <div class="box">
 <h2>数据备份/迁移</h2>
@@ -232,6 +235,11 @@ const STOCK_KEY = "stock_data";
 const RECORD_KEY = "record_data";
 let editKey = "";
 
+// 获取科室名称
+function getDeptName(){
+    return document.getElementById("deptNameInput").value.trim();
+}
+
 // 获取当前标准日期 yyyy-mm-dd
 function getNowDate(){
     const d = new Date();
@@ -270,8 +278,7 @@ function getMonthDiff(s,e){
     if(b.getDate()<a.getDate())m--;
     return m;
 }
-
-// 新增：清理库存中数量≤0的项
+// 清理库存数量为0的数据
 function cleanZeroStock() {
     const stock = getStorage(STOCK_KEY);
     for (let k in stock) {
@@ -282,19 +289,25 @@ function cleanZeroStock() {
     setStorage(STOCK_KEY, stock);
 }
 
-// 导出备份
+// 导出全部备份JSON（新增科室字段）
 function exportAllData(){
     const stock=getStorage(STOCK_KEY);
     const records=getStorage(RECORD_KEY);
-    const obj={stock,records,exportTime:getNowDate()};
-    const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
+    const obj={
+        deptName:getDeptName(),
+        stock,
+        records,
+        exportTime:getNowDate(),
+        desc:"恩施市CDC物资系统备份"
+    };
+    const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json;charset=utf-8"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
     a.href=url;
     a.download=`物资备份_${getNowDate()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    alert("备份已下载，请保存");
+    alert("备份已下载，文件内包含填写的科室名称");
 }
 // 导入备份
 function importAllData(dom){
@@ -308,7 +321,10 @@ function importAllData(dom){
             if(!confirm("导入覆盖现有数据？")){dom.value="";return;}
             setStorage(STOCK_KEY,data.stock);
             setStorage(RECORD_KEY,data.records);
-            // 导入后清理0库存
+            // 若备份内有科室，回填输入框
+            if(data.deptName){
+                document.getElementById("deptNameInput").value = data.deptName;
+            }
             cleanZeroStock();
             loadType();renderStock();renderRecord();
             alert("导入成功");
@@ -336,15 +352,17 @@ function showStockAndValid(){
     const spec=trim(document.getElementById("out_spec").value);
     const stock=getStorage(STOCK_KEY);
     const k=`${t}_${f}_${spec}`;
-    if(stock[k])document.getElementById("out_valid_show").value=stock[k].validDate||"无";
-    document.getElementById("show_stock").value=stock[k]?.num||0;
+    if(stock[k]){
+        document.getElementById("show_stock").value=stock[k].num;
+        document.getElementById("out_valid_show").value=stock[k].validDate||"无";
+    }else clearOutValid();
 }
 function loadType(){
     const sel=document.getElementById("out_type");
     sel.innerHTML="<option value=''>请选择类别</option>";
     const stock=getStorage(STOCK_KEY);
     const set=new Set();
-    for(let k in stock)set.add(stock[k].type);
+    for(let k in stock) set.add(stock[k].type);
     set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
     document.getElementById("out_factory").innerHTML="<option value=''>请选择厂家</option>";
     document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
@@ -356,7 +374,7 @@ function loadFactory(){
     sel.innerHTML="<option value=''>请选择厂家</option>";
     const stock=getStorage(STOCK_KEY);
     const set=new Set();
-    for(let k in stock)if(stock[k].type===t)set.add(stock[k].factory);
+    for(let k in stock)if(stock[k].type===t) set.add(stock[k].factory);
     set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
     document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
     clearOutValid();
@@ -368,7 +386,7 @@ function loadSpec(){
     sel.innerHTML="<option value=''>请选择规格</option>";
     const stock=getStorage(STOCK_KEY);
     const set=new Set();
-    for(let k in stock)if(stock[k].type===t&&stock[k].factory===f)set.add(stock[k].spec);
+    for(let k in stock)if(stock[k].type===t&&stock[k].factory===f) set.add(stock[k].spec);
     set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
     clearOutValid();
 }
@@ -397,20 +415,19 @@ function stockIn(){
     if(!t||!f||!spec||num<=0){alert("请填写完整信息，数量大于0");return;}
     const key=`${t}_${f}_${spec}`;
     const stock=getStorage(STOCK_KEY);
-    if(editKey&&editKey!==key)delete stock[editKey];
+    if(editKey&&editKey!==key) delete stock[editKey];
     stock[key]={type:t,factory:f,spec:spec,num:num,validDate:valid};
     setStorage(STOCK_KEY,stock);
-    // 入库后清理0库存
     cleanZeroStock();
     const records=getStorage(RECORD_KEY);
     records.unshift({
         time:formatShow(""),rawTime:getNowDate(),
         type:t,factory:f,spec:spec,num:num,validDate:valid,
-        dept:"",user:"",opt:"入库",note:note,outTime:""
+        outTime:"",dept:"",user:"",opt:"入库",note:note
     });
     setStorage(RECORD_KEY,records);
     renderStock();renderRecord();clearInInput();loadType();
-    alert(editKey?"修改成功":"入库成功");
+    alert(editKey?"修改库存成功":"入库成功");
 }
 // 出库
 function stockOut(){
@@ -422,23 +439,21 @@ function stockOut(){
         const dept=getDept();
         const user=trim(document.getElementById("out_user").value);
         const stockNum=Number(document.getElementById("show_stock").value);
-        const valid=document.getElementById("out_valid_show").value==="无"?null:document.getElementById("out_valid_show").value;
+        const valid=document.getElementById("out_valid_show")==="无"?null:document.getElementById("out_valid_show").value;
         const dVal=document.getElementById("out_date").value;
-        if(!t||!f||!spec||num<=0||!dept||!user){alert("填写完整出库信息");return;}
+        if(!t||!f||!spec||num<=0||!dept||!user){alert("请填写完整出库信息");return;}
         if(stockNum<num){alert("库存不足");return;}
         const key=`${t}_${f}_${spec}`;
         const stock=getStorage(STOCK_KEY);
         stock[key].num-=num;
-        // 确保库存为0时删除
-        if(stock[key].num <= 0) delete stock[key];
+        if(stock[key].num<=0) delete stock[key];
         setStorage(STOCK_KEY,stock);
-        // 出库后清理0库存
         cleanZeroStock();
         const records=getStorage(RECORD_KEY);
         records.unshift({
             time:formatShow(dVal),rawTime:dVal||getNowDate(),
             type:t,factory:f,spec:spec,num:num,validDate:valid,
-            dept:dept,user:user,opt:"出库",note:"",outTime:dVal
+            outTime:dVal,dept:dept,user:user,opt:"出库",note:""
         });
         setStorage(RECORD_KEY,records);
         renderStock();renderRecord();resetOut();
@@ -453,31 +468,26 @@ function delRec(idx){
     const stock=getStorage(STOCK_KEY);
     if(!confirm("删除本条记录，库存同步回滚？"))return;
     if(item.opt==="入库"){
-        if(stock[k]){stock[k].num-=item.num;if(stock[k].num<=0)delete stock[k];}
+        if(stock[k]){stock[k].num-=item.num;if(stock[k]<=0)delete stock[k];}
     }else{
-        if(!stock[k])stock[k]={type:item.type,factory:item.factory,spec:item.spec,num:0,validDate:item.validDate};
+        if(!stock[k]) stock[k]={type:item.type,factory:item.factory,spec:item.spec,num:0,validDate:item.validDate};
         stock[k].num+=item.num;
     }
     setStorage(STOCK_KEY,stock);
-    // 删除记录后清理0库存
     cleanZeroStock();
     records.splice(idx,1);
     setStorage(RECORD_KEY,records);
     renderStock();renderRecord();loadType();
 }
-// 清空全部记录（同步清空库存）
+// 删除全部记录：同步清空库存+操作记录
 function delAllRecords(){
-    if(!confirm("确认清空所有操作记录和库存数据？此操作不可恢复！"))return;
-    // 清空库存数据
+    if(!confirm("确认清空所有库存与出入库记录，数据不可恢复！")) return;
     setStorage(STOCK_KEY, {});
-    // 清空操作记录数据
     setStorage(RECORD_KEY, []);
-    // 重新渲染页面（清空表格）
     renderStock();
     renderRecord();
-    // 重新加载出库的类别下拉框（清空后无数据）
     loadType();
-    alert("操作记录和库存数据已全部清空");
+    alert("库存、全部操作记录已清空");
 }
 // 打开编辑弹窗
 function openEditModal(idx){
@@ -499,59 +509,54 @@ function openEditModal(idx){
 function closeEditModal(){
     document.getElementById("editModal").style.display="none";
 }
+// 保存编辑记录
 function saveEditRecord(){
-    const idx=Number(document.getElementById("editIndex").value);
+    const idx=Number(document.getElementById("editIndex"));
     const records=getStorage(RECORD_KEY);
     const old=records[idx];
     const oldKey=`${old.type}_${old.factory}_${old.spec}`;
     let stock=getStorage(STOCK_KEY);
-    // 撤销旧数据
     if(old.opt==="入库"){
-        if(stock[oldKey]){
-            stock[oldKey].num-=old.num;
-            if(stock[oldKey].num<=0) delete stock[oldKey];
-        }
+        if(stock[oldKey]){stock[oldKey].num-=old.num;if(stock[oldKey]<=0)delete stock[oldKey];}
     }else{
         if(!stock[oldKey]) stock[oldKey]={type:old.type,factory:old.factory,spec:old.spec,num:0,validDate:old.validDate};
         stock[oldKey].num+=old.num;
     }
     setStorage(STOCK_KEY,stock);
-    // 新数据
     const t=trim(document.getElementById("editType").value);
     const f=trim(document.getElementById("editFactory").value);
     const spec=trim(document.getElementById("editSpec").value);
-    const num=Number(document.getElementById("editNum").value);
+    const num=Number(trim(document.getElementById("editNum").value));
     const valid=document.getElementById("editValid").value||null;
     const dVal=document.getElementById("editTime").value;
     const dept=trim(document.getElementById("editDept").value);
     const user=trim(document.getElementById("editUser").value);
     const note=trim(document.getElementById("editNote").value);
-    if(!t||!f||!spec||num<=0){alert("信息不全");return;}
+    if(!t||!f||!spec||num<=0){alert("信息填写完整");return;}
     const newKey=`${t}_${f}_${spec}`;
     stock=getStorage(STOCK_KEY);
     if(!stock[newKey]) stock[newKey]={type:t,factory:f,spec:spec,num:0,validDate:valid};
     if(document.getElementById("editOptType").value==="入库"){
         stock[newKey].num+=num;
+        newOutDate="";
     }else{
-        if(stock[newKey].num<num){alert("库存不足");return;}
+        if(stock[newKey]<num){alert("库存不足");return;}
         stock[newKey].num-=num;
-        if(stock[newKey].num<=0) delete stock[newKey];
+        if(stock[newKey]<=0) delete stock[newKey];
     }
     setStorage(STOCK_KEY,stock);
-    // 编辑后清理0库存
     cleanZeroStock();
     records[idx]={
         time:formatShow(dVal),rawTime:dVal||getNowDate(),
         type:t,factory:f,spec:spec,num:num,validDate:valid,
-        dept:dept,user:user,opt:document.getElementById("editOptType").value,note:note,outTime:dVal
+        outTime:dVal,dept:dept,user:user,opt:document.getElementById("editOptType").value,note:note
     };
     setStorage(RECORD_KEY,records);
     closeEditModal();renderStock();renderRecord();loadType();
     alert("修改完成");
 }
-// 渲染库存（无操作按钮）
+// 渲染库存清单：不足3个月全部红色、0库存自动过滤
 function renderStock(){
-    // 渲染前先清理0库存
     cleanZeroStock();
     const today=getNowDate();
     const stock=getStorage(STOCK_KEY);
@@ -559,25 +564,35 @@ function renderStock(){
     tbody.innerHTML="";
     for(let k in stock){
         const item=stock[k];
-        const num=item.num;
+        const num=Number(item.num);
         const vd=item.validDate;
-        let vText="-",vCls="";
+        let showText="-",cls="";
         if(vd){
-            const diff=getDayDiff(today,vd);
-            if(diff<0){vText="已过期";vCls="low-valid";}
-            else if(diff<30){vText="近30天到期";vCls="low-valid";}
-            else vText=getMonthDiff(today,vd)+"个月";
+            const dayLeft=getDayDiff(today,vd);
+            const monthLeft=getMonthDiff(today,vd);
+            if(dayLeft < 0 || dayLeft < 30 || monthLeft < 3){
+                cls="low-valid";
+                if(dayLeft < 0){
+                    showText="已过期";
+                }else if(dayLeft < 30){
+                    showText=`${dayLeft}天后到期！`;
+                }else{
+                    showText=`${monthLeft}月后到期！`;
+                }
+            }else{
+                showText=`${monthLeft}个月`;
+            }
         }
         tbody.innerHTML+=`<tr>
             <td>${item.type}</td>
             <td>${item.factory}</td>
             <td>${item.spec}</td>
             <td class="${num<100?'low-stock':''}">${num}</td>
-            <td class="${vCls}">${vText}</td>
+            <td class="${cls}">${showText}</td>
         </tr>`;
     }
 }
-// 渲染记录（保留操作）
+// 渲染操作记录
 function renderRecord(){
     const records=getStorage(RECORD_KEY);
     const tbody=document.querySelector("#record_table tbody");
@@ -586,7 +601,7 @@ function renderRecord(){
         const c=item.opt==="入库"?"#00b42a":"#ff7700";
         const v=item.validDate||"-";
         const dt=item.outTime?formatShow(item.outTime):"-";
-        tbody.innerHTML+=`<tr>
+        tbody+=`<tr>
             <td>${item.time}</td>
             <td>${item.type}</td>
             <td>${item.factory}</td>
@@ -601,19 +616,19 @@ function renderRecord(){
             <td>
                 <button class="btn-edit" onclick="openEditModal(${i})">编辑</button>
                 <button class="btn-del" onclick="delRec(${i})">删</button>
-            </td>
-        </tr>`;
+            </tr>`;
     })
 }
-// 导出CSV
+// 导出CSV报表【首行增加科室名称】
 function exportRecord(){
     const records=getStorage(RECORD_KEY);
-    if(records.length===0){alert("无记录");return;}
-    let csv="操作时间,类别,厂家,规格,数量,效期截止日,时间,领用单位,领用人,类型,备注\n";
-    records.forEach(it=>{
-        const v=it.validDate||"";
-        const d=it.outTime?formatShow(it.outTime):"";
-        csv+=`"${it.time}","${it.type}","${it.factory}","${it.spec}","${it.num}","${v}","${d}","${it.dept||""}","${it.user||""}","${it.opt}","${it.note||""}"\n`;
+    if(records.length===0) return alert("暂无记录");
+    const dept=getDeptName();
+    let csv=`科室名称：${dept}\n操作时间,类别,厂家,规格,数量,效期截止日,时间,领用单位,领用人,类型,备注\n`;
+    records.forEach(item=>{
+        const v=item.validDate||"";
+        const t=item.outTime?formatShow(item.outTime):"";
+        csv+=`"${item.time}","${item.type}","${item.factory}","${item.num}","${v}","${t}","${item.dept||""}","${item.user||""}","${item.opt}","${item.note||""}"\n`;
     });
     const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
     const url=URL.createObjectURL(blob);
@@ -624,7 +639,6 @@ function exportRecord(){
     URL.revokeObjectURL(url);
 }
 window.onload=function(){
-    // 页面加载时先清理0库存
     cleanZeroStock();
     loadType();renderStock();renderRecord();
 }
