@@ -1,633 +1,1671 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>物资出入库管理</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft Yahei",sans-serif;font-size:14px}
-body{max-width:100%;margin:10px auto;padding:0 8px;background:#f5f7fa}
-.main-title{text-align:center;font-size:20px;font-weight:bold;margin:15px 0 4px 0;color:#222}
-.sub-title{text-align:center;font-size:16px;font-weight:normal;margin-bottom:15px;color:#333}
-h2{margin:8px 0;color:#222;font-size:16px}
-.box{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 6px #ddd;margin-bottom:15px}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
-input,select,label{padding:6px 4px;border:1px solid #ccc;border-radius:4px;font-size:14px}
-input[readonly]{background:#eee;color:#666}
-.hide{display:none!important}
-.edit-tip{color:#f53f3f;font-weight:bold}
-button{padding:7px 10px;border:none;border-radius:4px;cursor:pointer;color:#fff;font-size:13px;white-space:nowrap}
-.btn-in{background:#00b42a}
-.btn-out{background:#ff7700}
-.btn-del{background:#f53f3f}
-.btn-edit{background:#4096ff}
-.btn-clear{background:#86909c}
-.btn-export{background:#1677ff}
-.btn-backup{background:#009688}
-.btn-import{background:#722ed1}
-table{width:100%;border-collapse:collapse;margin-top:8px}
-table th,table td{border:1px solid #e5e6eb;padding:6px 2px;text-align:center;font-size:12px}
-table th{background:#f2f3f5}
-#in_num {width: 80px;min-width: 80px;}
-#out_num {width: 80px;min-width: 80px;}
-#show_stock {width: 70px;min-width: 70px;}
-#out_dept {width: 80px;min-width: 80px;}
-#out_user {width: 80px;min-width: 80px;}
-#in_valid_date {width: 130px;min-width:130px;}
-#out_valid_show {width:120px;min-width:120px;}
-#out_date {width: 130px;min-width:130px;}
-#in_type,#in_factory,#in_spec,#in_note,#custom_dept {min-width: 110px;}
-.low-stock {color: #f53f3f;font-weight: bold;}
-.low-valid {color: #f53f3f;font-weight: bold;}
-#fileInput{display: none;}
-.table-wrap{overflow-x:auto; -webkit-overflow-scrolling: touch;}
-.modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0.5);display:none;align-items:center;justify-content:center;z-index:999;}
-.modal-box{background:#fff;width:92%;max-width:520px;padding:16px;border-radius:8px;max-height:90vh;overflow-y:auto;}
-.modal-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center}
-.modal-row label{width:90px;text-align:right;border:none;padding:0}
-.modal-row input,.modal-row select{flex:1;min-width:120px}
-.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:16px}
+/* 原有页面样式可写在这里 */
+@media print {
+  /* 清除浏览器打印页眉、页脚、页码、URL */
+  @page {
+    margin: 10mm;
+    margin-top: 5mm;
+    margin-bottom: 5mm;
+    @top-center { content: ""; }
+    @bottom-center { content: ""; }
+  }
+  /* 隐藏顶部按钮栏，打印不显示操作按钮 */
+  .btn-bar {
+    display: none !important;
+  }
+  body {
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+  }
+}
+</style>
+    <meta charset="UTF-8">
+    <title>HD -survey</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 4px 0;
+            font-size: 14px;
+            font-family: "Microsoft Yahei", SimSun, sans-serif;
+        }
+        body {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+        h1 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            text-align:center;
+        }
+        h2 {
+            font-size: 18px;
+            margin: 16px 0 8px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+        }
+        h3 {
+            font-size: 16px;
+            margin: 12px 0 6px;
+        }
+        h4 {
+            font-size: 15px;
+            margin: 6px 0;
+        }
+        .row {
+            margin: 8px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+        .item-group {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+        .item-gap1 {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        label {
+            white-space: nowrap;
+        }
+        input[type="text"], input[type="date"], input[type="number"] {
+            padding: 3px 6px;
+            border: 1px solid #666;
+        }
+        input[maxlength="2"] { width: 40px; }
+        input[maxlength="3"] { width: 50px; }
+        input[maxlength="4"] { width: 60px; }
+        input[maxlength="6"] { width: 80px; }
+        input[maxlength="7"] { width: 90px; }
+        input[maxlength="8"] { width: 110px; }
+        input[maxlength="10"] { width: 130px; }
+        input[maxlength="12"] { width: 160px; }
+        input[maxlength="16"] { width: 190px; }
+        input[maxlength="20"] { width: 240px; }
+        input[maxlength="30"] { width: 320px; }
+        input[maxlength="50"] { width: 480px; }
+        .block {
+            margin: 10px 0 20px;
+            padding: 10px;
+            border: 1px solid #999;
+        }
+        .contact-line {
+            border: 1px dashed #aaa;
+            padding: 8px;
+            margin: 6px 0;
+        }
+        .btn-bar {
+            margin: 10px 0 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 6px 14px;
+            cursor: pointer;
+            border: 1px solid #333;
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #e8e8e8;
+        }
+        .required {
+            color: red;
+        }
+        .bold-text {
+            font-weight: bold;
+        }
+        /* 弹窗样式 */
+        .mask {
+            position: fixed;
+            top:0;left:0;right:0;bottom:0;
+            background: rgba(0,0,0,0.5);
+            display:none;
+            z-index:999;
+        }
+        .modal {
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            background:#fff;
+            margin: 5vh auto;
+            padding:20px;
+            border-radius:6px;
+        }
+        .history-item {
+            border:1px solid #ccc;
+            padding:10px;
+            margin:8px 0;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+        }
+        .history-btn-group button {
+            margin:0 4px;
+        }
+        #fileInput {
+            display:none;
+        }
+        /* 打印样式 */
+        @media print {
+            .btn-bar, button, .mask { display: none !important; }
+            .block { border: 0.5px solid #666; }
+            .contact-line { border: 0.5px dashed #888; }
+            body { padding: 0; }
+        }
+    
+/* 统一所有单选选项行间距 */
+.radio-group {
+    line-height: 2.2; /* 控制每行高度，数值越大间距越宽 */
+    margin: 8px 0;
+}
+.radio-group input[type="radio"] {
+    margin-right: 6px;
+    margin-left: 12px;
+}
 </style>
 </head>
 <body>
-<div class="main-title">物资出入库管理</div>
-<div class="sub-title">（恩施市CDC重大疾病科制作）</div>
+  <!-- 顶部操作按钮栏 -->
+<div class="btn-bar">
+    <button id="btnSave">保存本条</button>
+    <button id="btnExportExcel">导出Excel</button>
+    <button id="btnExportWord" onclick="window.print()">打印Word</button>
+    <button id="btnImport">导入数据</button>
+    <input type="file" id="fileInput" accept=".csv" style="display:none;">
+    <button id="btnHistory">历史数据</button>
+    <!-- 新增清除界面按钮 -->
+    <button id="btnClear">清除界面</button>
+</div>
 
-<div class="box">
-<h2>数据备份/迁移</h2>
+<!-- 被调查人输入框 放在1.基本情况前面 -->
+<div class="row" style="align-items:center;gap:30px;margin-bottom:16px;">
+    <h2 style="margin:0;">1. 基本情况</h2>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <label class="bold-text">被调查人：</label>
+        <!-- 输入框：ID/name和原采集函数完全一致，绝不改ID -->
+        <input type="text" 
+               id="investigateeName" 
+               name="investigateeName" 
+               maxlength="6" 
+               placeholder="姓名第二个字用*号表示，如张*华" 
+               style="width:260px;padding:3px 6px;border:1px solid #666;">
+    </div>
+</div>
+
+<!-- 1.1~1.9 独立外框 -->
+<div class="block" style="border:1px solid #000; padding:12px;">
+    <div class="row">
+        <label><span class="bold-text">1.1 文化程度：</span>
+        <div class="item-group radio-culture">
+            <label><input type="radio" name="culture" value="文盲"> 文盲</label>
+            <label><input type="radio" name="culture" value="小学"> 小学</label>
+            <label><input type="radio" name="culture" value="初中"> 初中</label>
+            <label><input type="radio" name="culture" value="高中或中专"> 高中或中专</label>
+            <label><input type="radio" name="culture" value="大学或大专"> 大学或大专</label>
+            <label><input type="radio" name="culture" value="研究生及以上"> 研究生及以上</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+            <span style="font-weight:bold;font-size:14px;">1.2 职业：</span>
+            <label><input type="radio" name="job" value="幼托儿童"> 幼托儿童</label>
+            <label><input type="radio" name="job" value="散居儿童"> 散居儿童</label>
+            <label><input type="radio" name="job" value="学生(大中小学)"> 学生(大中小学)</label>
+            <label><input type="radio" name="job" value="教师"> 教师</label>
+            <label><input type="radio" name="job" value="保育员及保姆"> 保育员及保姆</label>
+            <label><input type="radio" name="job" value="餐饮食品业"> 餐饮食品业</label>
+            <label><input type="radio" name="job" value="商业服务"> 商业服务</label>
+            <label><input type="radio" name="job" value="医务人员"> 医务人员</label>
+            <label><input type="radio" name="job" value="工人"> 工人</label>
+            <label><input type="radio" name="job" value="民工"> 民工</label>
+            <label><input type="radio" name="job" value="农民"> 农民</label>
+            <label><input type="radio" name="job" value="牧民"> 牧民</label>
+            <label><input type="radio" name="job" value="渔(船)民"> 渔(船)民</label>
+            <label><input type="radio" name="job" value="干部职员"> 干部职员</label>
+            <label><input type="radio" name="job" value="离退人员"> 离退人员</label>
+            <label><input type="radio" name="job" value="家务及待业"> 家务及待业</label>
+            <label><input type="radio" name="job" value="公共场所服务员"> 公共场所服务员</label>
+            <label><input type="radio" name="job" value="不详"> 不详</label>
+             </div>
+    </div>
+
+    <div class="row">
+        <label>工作单位/学校：</label>
+        <input type="text" name="workUnit" maxlength="50" placeholder="民工/教师/医务人员/工人/干部职工/学生/托幼儿童需填">
+    </div>
+
 <div class="row">
-<button class="btn-backup" onclick="exportAllData()">导出全部数据备份</button>
-<button class="btn-import" onclick="document.getElementById('fileInput').click()">导入备份文件</button>
-<input type="file" id="fileInput" accept=".json" onchange="importAllData(this)">
-</div>
-<span style="color:#666;font-size:12px">提示：微信关闭页面缓存会丢失数据，建议经常导出备份</span>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <span style="font-weight:bold;font-size:14px;">1.3 民族：</span>
+        <label><input type="radio" name="jobOther" value="汉族">汉族</label>
+        <label><input type="radio" name="jobOther" value="土家族">土家族</label>
+        <label><input type="radio" name="jobOther" value="侗族">侗族</label>
+        <label><input type="radio" name="jobOther" value="苗族">苗族</label>
+        <label><input type="radio" name="jobOther" value="回族">回族</label>
+        <label><input type="radio" name="jobOther" value="藏族">藏族</label>
+        <label><input type="radio" name="jobOther" value="彝族">彝族</label>
+        <label><input type="radio" name="jobOther" value="京族">京族</label>
+        <label><input type="radio" name="jobOther" value="土族">土族</label>
+        <label><input type="radio" name="jobOther" value="壮族">壮族</label>
+        <label><input type="radio" name="jobOther" value="白族">白族</label>
+    </div>
 </div>
 
-<div class="box">
-<h2>物资入库 <span class="edit-tip" id="editTip"></span></h2>
+    <div class="row">
+        <label><span class="bold-text">1.4 婚姻：</span>
+        <div class="item-group radio-marry">
+            <label><input type="radio" name="marry" value="未婚"> 未婚</label>
+            <label><input type="radio" name="marry" value="离异或丧偶"> 离异或丧偶</label>
+            <label><input type="radio" name="marry" value="已婚或有配偶"> 已婚或有配偶</label>
+            <label><input type="radio" name="marry" value="同居"> 同居</label>
+            <label><input type="radio" name="marry" value="分居"> 分居</label>
+            <label><input type="radio" name="marry" value="不详"> 不详</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <label><span class="bold-text">1.5 配偶或性伴抗体检测：</span>
+        <div class="item-group radio-partner-test">
+            <label><input type="radio" name="partnerTest" value="未查/不详"> 未查/不详</label>
+            <label><input type="radio" name="partnerTest" value="阴性"> 阴性</label>
+            <label><input type="radio" name="partnerTest" value="阳性"> 阳性</label>
+        </div>
+        <input type="text" name="partnerTestDate" maxlength="30" placeholder="填写检查日期/卡片编号，用/隔开">
+    </div>
+    <div class="row">
+        <label>近1年内的性伴数量：</label>
+        <div class="item-group radio-partner-num">
+            <label><input type="radio" name="partnerNum" value="0人"> 0人</label>
+            <label><input type="radio" name="partnerNum" value="1人"> 1人</label>
+            <label><input type="radio" name="partnerNum" value="2人以上"> 2人以上</label>
+            <label><input type="radio" name="partnerNum" value="5人以上"> 5人以上</label>
+        </div>
+    </div>
+    <div class="row">
+        <label>近1年内的性伴中是否有人艾滋病检测阳性？</label>
+        <div class="item-group radio-partner-hiv">
+            <label><input type="radio" name="partnerHiv" value="有"> 有</label>
+            <label><input type="radio" name="partnerHiv" value="无"> 无</label>
+            <label><input type="radio" name="partnerHiv" value="不清楚"> 不清楚</label>
+        </div>
+    </div>
+    <div class="row">
+        <label>是否有固定性伴：</label>
+        <div class="item-group radio-fixed-partner">
+            <label><input type="radio" name="fixedPartner" value="有"> 有</label>
+            <label><input type="radio" name="fixedPartner" value="无"> 无</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <label><span class="bold-text">1.6有无子女：</label>
+        <div class="item-group">
+            <label><input type="checkbox" name="childHas" value="无"> 无</label>
+            <label><input type="checkbox" name="childHas" value="有"> 有</label>
+            <label><input type="checkbox" name="childHas" value="孕期中"> 孕期中</label>
+        </div>
+        <label>检测：</label>
+        <div class="item-group radio-child-test">
+            <label><input type="radio" name="childTest" value="阳性"> 阳性</label>
+            <label><input type="radio" name="childTest" value="阴性"> 阴性</label>
+            <label><input type="radio" name="childTest" value="未查/不详"> 未查/不详</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <label><span class="bold-text">1.7 药品使用：</label>
+        <div class="item-group radio-use-drug">
+            <label><input type="radio" name="useDrug" value="否"> 否</label>
+            <label><input type="radio" name="useDrug" value="是"> 是</label>
+        </div>
+        <label>药物名称：</label>
+        <input type="text" name="drugName" maxlength="10" placeholder="请注明药物名称，用/隔开">
+    </div>
+    <div class="row">
+        <label>是否接受过暴露前后的药物预防治疗：</label>
+        <div class="item-group radio-pep">
+            <label><input type="radio" name="pep" value="否"> 否</label>
+            <label><input type="radio" name="pep" value="是"> 是</label>
+        </div>
+        <input type="text" name="pepDrug" maxlength="8" placeholder="请注明药物名称">
+    </div>
+
+    <!-- 1.8 检测CD4 -->
+    <div class="row">
+        <label><span class="bold-text">1.8 检测CD4：</span>
+        <label><input type="radio" name="cd4" value="否"> 否</label>
+        <label><input type="radio" name="cd4" value="是"> 是</label>
+        <input type="text" name="cd4Num" placeholder="填写检测时间/结果,用/隔开"> 个/μl
+        </label>
+    </div>
+
+    <div class="row">
+        <label><span class="bold-text">1.9 检测史：</span>
+        <label>确诊前是否做过HIV检测：</label>
+        <div class="item-group" style="display:inline-flex;gap:12px;margin:0 10px;">
+            <label><input type="radio" name="stuHivTest" value="否"> 否</label>
+            <label><input type="radio" name="stuHivTest" value="是"> 是</label>
+        </div>
+         <label>末次检测时间及结果：</label>
+        <input type="text" name="stuHivTest="20" placeholder="如：20260101/阴性">
+        </label>
+    </div>
+
+<h2>2. 高危行为和因素</h2>
+<!-- 2.1~2.6 独立外框 -->
+<div class="block" style="border:1px solid #000; padding:12px;">
+    <h3>2.1 吸毒史</h3>
 <div class="row">
-<input type="text" id="in_type" placeholder="类别名称">
-<input type="text" id="in_factory" placeholder="厂家">
-<input type="text" id="in_spec" placeholder="规格">
-<input type="number" id="in_num" placeholder="数量" min="1">
-<label>效期</label><input type="date" id="in_valid_date">
-<input type="text" id="in_note" placeholder="经办人">
-<button class="btn-in" onclick="stockIn()">确认入库</button>
-<button class="btn-clear" onclick="clearInInput()">清空</button>
+    <label>目前吸毒方式：</label>
+    <div class="item-group radio-drug-way">
+        <label><input type="radio" name="drugWay" value="不吸毒"> 不吸毒</label>
+        <label><input type="radio" name="drugWay" value="口吸"> 口吸</label>
+        <label><input type="radio" name="drugWay" value="注射"> 注射</label>
+        <label><input type="radio" name="drugWay" value="都有"> 都有</label>
+    </div>
+    <label>首次吸毒时间：</label>
+    <input type="text" name="firstDrugTime" maxlength="6" placeholder="*年*月">
 </div>
-<span style="color:#999;font-size:12px">效期日期选填，不选代表无有效期</span>
-</div>
-
-<div class="box">
-<h2>物资出库</h2>
 <div class="row">
-<select id="out_type" onchange="loadFactory();clearOutValid()">
-<option value="">请选择类别</option>
-</select>
-<select id="out_factory" onchange="loadSpec();clearOutValid()">
-<option value="">请选择厂家</option>
-</select>
-<select id="out_spec" onchange="showStockAndValid()">
-<option value="">请选择规格</option>
-</select>
-<input type="number" id="out_num" placeholder="出库数" min="1">
-<input readonly id="out_valid_show" placeholder="效期截止日">
-<label>时间</label><input type="date" id="out_date">
-<select id="out_dept" onchange="toggleCustomDept()">
-<option value="">领用单位</option>
-<option value="舞阳坝">舞阳坝</option>
-<option value="小渡船">小渡船</option>
-<option value="金子坝">金子坝</option>
-<option value="七里坪">七里坪</option>
-<option value="六角亭">六角亭</option>
-<option value="三岔">三岔</option>
-<option value="新塘">新塘</option>
-<option value="红土">红土</option>
-<option value="屯堡">屯堡</option>
-<option value="沐抚">沐抚</option>
-<option value="板桥">板桥</option>
-<option value="白果">白果</option>
-<option value="盛家">盛家</option>
-<option value="芭蕉">芭蕉</option>
-<option value="沙地">沙地</option>
-<option value="崔坝">崔坝</option>
-<option value="龙凤">龙凤</option>
-<option value="太阳">太阳</option>
-<option value="白杨">白杨</option>
-<option value="其他">其他</option>
-</select>
-<input type="text" id="custom_dept" class="hide" placeholder="填写单位">
-<input type="text" id="out_user" placeholder="领用人">
-<input id="out_note" placeholder="经办人">
-<input readonly id="show_stock" placeholder="库存">
-<button class="btn-out" onclick="stockOut()">确认出库</button>
-<button class="btn-clear" onclick="resetOut()">清空</button>
+    <label>首次注射吸毒时间：</label>
+    <input type="text" name="firstInjectDrugTime" maxlength="6" placeholder="*年*月">
+    &nbsp;&nbsp;
+    <label>共用注射器吸毒：</label>
+    <div class="item-group radio-share-needle">
+        <label><input type="radio" name="shareNeedle" value="无"> 无</label>
+        <label><input type="radio" name="shareNeedle" value="有"> 有</label>
+    </div>
+    <label>共用注射器的人数：</label>
+    <input type="text" name="shareNeedleNum" maxlength="3">
 </div>
-</div>
-
-<div class="box">
-<h2>全部库存清单</h2>
-<div class="table-wrap">
-<table id="stock_table">
-<thead>
-<tr>
-<th>类别</th>
-<th>厂家</th>
-<th>规格</th>
-<th>库存</th>
-<th>有效期(月)</th>
-</tr>
-<tbody></tbody>
-</table>
-</div>
-</div>
-
-<div class="box">
-<div class="row" style="justify-content: space-between;align-items:center;">
-<h2>出入库操作记录</h2>
 <div class="row">
-<button class="btn-export" onclick="exportRecord()">导出CSV报表</button>
-<button class="btn-del" onclick="delAllRecords()">删除全部记录</button>
+    <label>确诊前是否使用过成瘾性物质：</label>
+    <select name="stuAddictSub">
+        <option value="">请选择</option>
+        <option value="传统毒品(如海洛因、可卡因等)">传统毒品(如海洛因、可卡因等)</option>
+        <option value="新型毒品(如K粉、冰毒等)">新型毒品(如K粉、冰毒等)</option>
+        <option value="零号胶囊">零号胶囊</option>
+        <option value="Rush">Rush</option>
+        <option value="无">无</option>
+    </select>
 </div>
-</div>
-<div class="table-wrap">
-<table id="record_table">
-<thead>
-<tr>
-<th>操作时间</th>
-<th>类别</th>
-<th>厂家</th>
-<th>规格</th>
-<th>数量</th>
-<th>效期截止日</th>
-<th>时间</th>
-<th>领用单位</th>
-<th>领用人</th>
-<th>类型</th>
-<th>经办人</th>
-<th>操作</th>
-</tr>
-<tbody></tbody>
-</table>
-</div>
+<div class="row">
+    <label>配偶或性伴是否吸毒：</label>
+    <div class="item-group">
+        <label><input type="radio" name="partnerDrug" value="否"> 否</label>
+        <label><input type="radio" name="partnerDrug" value="口吸"> 口吸</label>
+        <label><input type="radio" name="partnerDrug" value="注射"> 注射</label>
+    </div>
 </div>
 
-<!-- 编辑弹窗 -->
-<div class="modal-mask" id="editModal">
-    <div class="modal-box">
-        <h3 style="text-align:center;margin-bottom:12px">编辑记录</h3>
-        <input type="hidden" id="editIndex">
-        <div class="modal-row">
-            <label>操作类型</label>
-            <select id="editOptType">
-                <option value="入库">入库</option>
-                <option value="出库">出库</option>
-            </select>
+    <h3>2.2 性接触史</h3>
+    <div class="row">
+        <label>性行为(可多选)：</label>
+        <div class="item-group">
+            <label><input type="checkbox" name="sexBehavior" value="无"> 无</label>
+            <label><input type="checkbox" name="sexBehavior" value="①婚内"> ①婚内</label>
+            <label><input type="checkbox" name="sexBehavior" value="②商业"> ②商业</label>
+            <label><input type="checkbox" name="sexBehavior" value="③非商业"> ③非商业</label>
+            <label><input type="checkbox" name="sexBehavior" value="④同性"> ④同性</label>
         </div>
-        <div class="modal-row">
-            <label>类别</label>
-            <input type="text" id="editType">
+    </div>
+    <div class="row">
+        <label>发生非婚异性性行为人数：</label>
+        <input type="text" name="heteroNum" maxlength="3">
+        <label>发生肛交人数：</label>
+        <input type="text" name="analNum" maxlength="3">
+    </div>
+    <div class="row">
+        <label>最后一次性接触：</label>
+        <div class="item-group radio-last-sex">
+            <label><input type="radio" name="lastSex" value="未戴套"> 未戴套</label>
+            <label><input type="radio" name="lastSex" value="戴套"> 戴套</label>
         </div>
-        <div class="modal-row">
-            <label>厂家</label>
-            <input type="text" id="editFactory">
+        <input type="text" name="lastSexRemark" maxlength="8" placeholder="注明①②③④">
+    </div>
+    <div class="row">
+        <label>过去3个月异性性行为(可多选)：</label>
+        <div class="item-group">
+            <label><input type="checkbox" name="monthHetero" value="无"> 无</label>
+            <label><input type="checkbox" name="monthHetero" value="从不戴套"> 从不戴套</label>
+            <input type="text" name="monthNoCondomRemark" maxlength="6" placeholder="注明①②③">
+            <label><input type="checkbox" name="monthHetero" value="有时戴套"> 有时戴套</label>
+            <input type="text" name="monthSometimesRemark" maxlength="6" placeholder="注明①②③">
+            <label><input type="checkbox" name="monthHetero" value="每次都戴"> 每次都戴</label>
+            <input type="text" name="monthAllRemark" maxlength="6" placeholder="注明①②③">
         </div>
-        <div class="modal-row">
-            <label>规格</label>
-            <input type="text" id="editSpec">
+    </div>
+    <div class="row">
+    <label>半年内肛交(单选)：</label>
+    <div class="item-group">
+        <label><input type="radio" name="halfYearAnal" value="无"> 无</label>
+        <label><input type="radio" name="halfYearAnal" value="从不戴套"> 从不戴套</label>
+        <label><input type="radio" name="halfYearAnal" value="有时戴"> 有时戴</label>
+        <label><input type="radio" name="halfYearAnal" value="每次都戴"> 每次都戴</label>
+    </div>
+</div>
+    <div class="row">
+        <label>性病史：</label>
+        <div class="item-group radio-std">
+            <label><input type="radio" name="std" value="无"> 无</label>
+            <label><input type="radio" name="std" value="不详"> 不详</label>
+            <label><input type="radio" name="std" value="有"> 有</label>
         </div>
-        <div class="modal-row">
-            <label>数量</label>
-            <input type="number" min="1" id="editNum">
+    </div>
+
+    <h3>2.3 受血史</h3>
+    <div class="row">
+        <label>受血类别(可多选)：</label>
+        <div class="item-group">
+            <label><input type="checkbox" name="bloodType" value="无"> 无</label>
+            <label><input type="checkbox" name="bloodType" value="全血"> 全血</label>
+            <label><input type="checkbox" name="bloodType" value="血浆"> 血浆</label>
+            <label><input type="checkbox" name="bloodType" value="血制品"> 血制品</label>
         </div>
-        <div class="modal-row">
-            <label>效期截止日</label>
-            <input type="date" id="editValid">
+    </div>
+    <div class="row">
+        <label>首次时间：</label>
+        <input type="text" name="firstBloodTime" maxlength="6" placeholder="如：202606">
+        <label>地点：</label>
+        <input type="text" name="firstBloodAddr" maxlength="8">
+        <label>末次时间：</label>
+        <input type="text" name="lastBloodTime" maxlength="6" placeholder="如：202606">
+        <label>地点：</label>
+        <input type="text" name="lastBloodAddr" maxlength="8">
+    </div>
+    <div class="row">
+        <label>诊断感染前1年因手术、输血等住院治疗：</label>
+        <div class="item-group radio-blood-hospital">
+            <label><input type="radio" name="bloodHospital" value="否"> 否</label>
+            <label><input type="radio" name="bloodHospital" value="有"> 有</label>
         </div>
-        <div class="modal-row">
-            <label>时间</label>
-            <input type="date" id="editTime">
+    </div>
+
+   <h3>2.4 供血(浆)史</h3>
+<div class="row">
+    <label>有无供血(浆)史：</label>
+    <div class="item-group radio-blood-donate">
+        <label><input type="radio" name="bloodDonate" value="无"> 无</label>
+        <label><input type="radio" name="bloodDonate" value="有"> 有</label>
+    </div>
+</div>
+
+<!-- 【首次供全血】name必须带first，和末次区分，绝对不能和末次重名 -->
+<div class="row">
+    <label>首次供全血时间：</label>
+    <input type="text" name="firstWholeBloodTime" maxlength="8" placeholder="/年/月">
+    <label>地点：</label>
+    <input type="text" name="firstWholeBloodAddr" maxlength="10" placeholder="/">
+    <label>采血单位：</label>
+    <input type="text" name="firstWholeBloodUnit" maxlength="10" placeholder="/">
+</div>
+
+<!-- 【末次供全血】name带last，和首次区分 -->
+<div class="row">
+    <label>末次供全血时间：</label>
+    <input type="text" name="lastWholeBloodTime" maxlength="8" placeholder="/年/月">
+    <label>地点：</label>
+    <input type="text" name="lastWholeBloodAddr" maxlength="10" placeholder="/">
+    <label>采血单位：</label>
+    <input type="text" name="lastWholeBloodUnit" maxlength="10" placeholder="/">
+</div>
+
+<!-- 首次供血浆（原name正确，保留） -->
+<div class="row">
+    <label>首次供血浆时间：</label>
+    <input type="text" name="firstPlasmaTime" maxlength="8" placeholder="/年/月">
+    <label>地点：</label>
+    <input type="text" name="firstPlasmaAddr" maxlength="10" placeholder="/">
+    <label>采血单位：</label>
+    <input type="text" name="firstPlasmaUnit" maxlength="10" placeholder="/">
+</div>
+
+<!-- 末次供血浆（原name正确，保留） -->
+<div class="row">
+    <label>末次供血浆时间：</label>
+    <input type="text" name="lastPlasmaTime" maxlength="8" placeholder="/年/月">
+    <label>地点：</label>
+    <input type="text" name="lastPlasmaAddr" maxlength="10" placeholder="/">
+    <label>采血单位：</label>
+    <input type="text" name="lastPlasmaUnit" maxlength="10" placeholder="/">
+</div>
+    <h3>2.5 职业暴露</h3>
+    <div class="row">
+        <label>暴露来源：</label>
+        <div class="item-group radio-expose-src">
+            <label><input type="radio" name="exposeSrc" value="无"> 无</label>
+            <label><input type="radio" name="exposeSrc" value="临床治疗"> 临床治疗</label>
+            <label><input type="radio" name="exposeSrc" value="手术"> 手术</label>
+            <label><input type="radio" name="exposeSrc" value="实验室检测"> 实验室检测</label>
+            <label><input type="radio" name="exposeSrc" value="他人故意伤害"> 他人故意伤害</label>
+            <label><input type="radio" name="exposeSrc" value="其他"> 其他</label>
         </div>
-        <div class="modal-row">
-            <label>领用单位</label>
-            <input type="text" id="editDept">
+        <input type="text" name="exposeSrcOther" maxlength="8" placeholder="选择其他请注明">
+    </div>
+    <div class="row">
+        <label>暴露级别：</label>
+        <div class="item-group radio-expose-level">
+            <label><input type="radio" name="exposeLevel" value="1级暴露"> 1级暴露</label>
+            <label><input type="radio" name="exposeLevel" value="2级暴露"> 2级暴露</label>
+            <label><input type="radio" name="exposeLevel" value="3级暴露"> 3级暴露</label>
         </div>
-        <div class="modal-row">
-            <label>领用人</label>
-            <input type="text" id="editUser">
+    </div>
+    <div class="row">
+        <label>药物阻断：</label>
+        <div class="item-group radio-block-drug">
+            <label><input type="radio" name="blockDrug" value="否"> 否</label>
+            <label><input type="radio" name="blockDrug" value="是"> 是</label>
         </div>
-        <div class="modal-row">
-            <label>经办人</label>
-            <input type="text" id="editNote">
+        <input type="text" name="blockDrugName" maxlength="10" placeholder="注明阻断药物名称">
+    </div>
+
+    <!-- 2.6 患儿填写项 -->
+    <h3>2.6 患儿填写项</h3>
+    <div class="row">
+        <label>患儿母亲：</label>
+        <div class="item-group radio-mother-hiv">
+           <label><input type="radio" name="motherHiv" value="不是患儿"> 不是患儿</label>
+            <label><input type="radio" name="motherHiv" value="未检测"> 未检测</label>
+            <label><input type="radio" name="motherHiv" value="阴性"> 阴性</label>
+            <label><input type="radio" name="motherHiv" value="阳性已治疗"> 阳性已治疗</label>
+            <label><input type="radio" name="motherHiv" value="阳性未治疗"> 阳性未治疗</label>
         </div>
-        <div class="modal-btns">
-            <button class="btn-edit" onclick="saveEditRecord()">保存修改</button>
-            <button class="btn-clear" onclick="closeEditModal()">取消</button>
+        <input type="text" name="motherCardId" maxlength="19" placeholder="注明病例报告卡号">
+    </div>
+    <div class="row">
+        <label>喂养方式：</label>
+        <div class="item-group radio-feed">
+            <label><input type="radio" name="feed" value="母乳喂养"> 母乳喂养</label>
+            <label><input type="radio" name="feed" value="人工喂养"> 人工喂养</label>
+            <label><input type="radio" name="feed" value="混合喂养"> 混合喂养</label>
+        </div>
+    </div>
+    <div class="row">
+        <label>患儿是否接受母婴阻断药物治疗：</label>
+        <div class="item-group radio-baby-block">
+            <label><input type="radio" name="babyBlock" value="有"> 有</label>
+            <label><input type="radio" name="babyBlock" value="无"> 无</label>
         </div>
     </div>
 </div>
 
+ <h2>3. 临床表现</h2>
+    <div style="border:1px solid #000; padding:12px;">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+    <span style="font-weight:bold;font-size:14px;">3.1 目前症状(可多选)：</span>
+    <label><input type="checkbox" name="symptomList" value="原因不明持续不规则低热多于1个月"> 原因不明持续不规则低热多于1个月</label>
+    <label><input type="checkbox" name="symptomList" value="原因不明的持续全身淋巴结肿大多于1个月"> 原因不明的持续全身淋巴结肿大多于1个月</label>
+    <label><input type="checkbox" name="symptomList" value="慢性腹泻多于3～5次/日，3个月内体重下降>10%"> 慢性腹泻多于3～5次/日，3个月内体重下降>10%</label>
+    <label><input type="checkbox" name="symptomList" value="口腔或内脏的念珠菌感染"> 口腔或内脏的念珠菌感染</label>
+    <label><input type="checkbox" name="symptomList" value="卡氏肺孢子虫肺炎"> 卡氏肺孢子虫肺炎</label>
+    <label><input type="checkbox" name="symptomList" value="巨细胞病毒感染"> 巨细胞病毒感染</label>
+    <label><input type="checkbox" name="symptomList" value="弓形虫脑病"> 弓形虫脑病</label>
+    <label><input type="checkbox" name="symptomList" value="新型隐球菌脑膜炎或隐球菌肺炎"> 新型隐球菌脑膜炎或隐球菌肺炎</label>
+    <label><input type="checkbox" name="symptomList" value="青霉菌感染"> 青霉菌感染</label>
+    <label><input type="checkbox" name="symptomList" value="败血症"> 败血症</label>
+    <label><input type="checkbox" name="symptomList" value="反复发生的细菌性肺炎"> 反复发生的细菌性肺炎</label>
+    <label><input type="checkbox" name="symptomList" value="皮肤粘膜或内脏的Kaposi肉瘤"> 皮肤粘膜或内脏的Kaposi肉瘤</label>
+    <label><input type="checkbox" name="symptomList" value="淋巴瘤"> 淋巴瘤</label>
+    <label><input type="checkbox" name="symptomList" value="中青年痴呆症"> 中青年痴呆症</label>
+    <label><input type="checkbox" name="symptomList" value="反复发作的疱疹病毒感染"> 反复发作的疱疹病毒感染</label>
+    <label><input type="checkbox" name="symptomList" value="活动性结核病或非结核分枝杆菌病"> 活动性结核病或非结核分枝杆菌病</label>
+    <label><input type="checkbox" name="symptomList" value="咳嗽/咳痰≥2W"> 咳嗽/咳痰≥2W</label>
+    <label><input type="checkbox" name="symptomList" value="反复痰中带血"> 反复痰中带血</label>
+    <label><input type="checkbox" name="symptomList" value="经常容易疲劳或呼吸短促"> 经常容易疲劳或呼吸短促</label>
+    <label><input type="checkbox" name="symptomList" value="夜间经常出汗"> 夜间经常出汗</label>
+    <label><input type="checkbox" name="symptomList" value="未有上述症"> 未有上述症</label>
+    <label><input type="checkbox" name="symptomList" value="其他"> 其他</label>
+    <input type="text" name="symptomOther" maxlength="10" placeholder="请注明">
+</div>
+
+<div class="row">
+    <label><span class="bold-text">3.2 诊断前有无相关症状：</span>
+    <div class="item-group radio-symptom-history">
+        <label><input type="radio" name="symptomHistory" value="未发现"> 未发现</label>
+        <label><input type="radio" name="symptomHistory" value="1年前出现过"> 1年前出现过</label>
+        <label><input type="radio" name="symptomHistory" value="1年内出现过"> 1年内出现过</label>
+    </div>
+</div>
+
+<!-- 【新增】3.3 密接有无相关症状，和3.2结构完全一致，风格统一 -->
+<div class="row">
+    <label><span class="bold-text">3.3 密接有无相关症状：</span>
+    <div class="item-group radio-close-contact-symptom">
+        <label><input type="radio" name="closeContactSymptom" value="是"> 是</label>
+        <label><input type="radio" name="closeContactSymptom" value="否"> 否</label>
+    </div>
+</div>
+ </div>
+
+    <h2>4. 人群类别<span class="required">*</span></h2>
+    <div class="block">
+        <div class="item-gap1 radio-crowd">
+            <label><input type="radio" name="crowd" value="术前检查者"> 术前检查者</label>
+            <label><input type="radio" name="crowd" value="输注血液/制品者"> 输注血液/制品者</label>
+            <label><input type="radio" name="crowd" value="性病门诊病人"> 性病门诊病人</label>
+            <label><input type="radio" name="crowd" value="其他就诊者检测"> 其他就诊者检测</label>
+            <label><input type="radio" name="crowd" value="婚前检查（含涉外）"> 婚前检查（含涉外）</label>
+            <label><input type="radio" name="crowd" value="孕产妇"> 孕产妇</label>
+            <label><input type="radio" name="crowd" value="自愿检测者"> 自愿检测者</label>
+            <label><input type="radio" name="crowd" value="阳性配偶/性伴"> 阳性配偶/性伴</label>
+            <label><input type="radio" name="crowd" value="女性阳性者子女检测"> 女性阳性者子女检测</label>
+            <label><input type="radio" name="crowd" value="职业暴露检测"> 职业暴露检测</label>
+            <label><input type="radio" name="crowd" value="暗娼"> 暗娼</label>
+            <label><input type="radio" name="crowd" value="嫖客"> 嫖客</label>
+            <label><input type="radio" name="crowd" value="男同性恋者"> 男同性恋者</label>
+            <label><input type="radio" name="crowd" value="注射吸毒"> 注射吸毒</label>
+            <label><input type="radio" name="crowd" value="非注射吸毒"> 非注射吸毒</label>
+            <label><input type="radio" name="crowd" value="有偿供血(浆)者"> 有偿供血(浆)者</label>
+            <label><input type="radio" name="crowd" value="婴幼儿／儿童(0至13岁)"> 婴幼儿／儿童(0至13岁)</label>
+            <label><input type="radio" name="crowd" value="海员/渔民"> 海员/渔民</label>
+            <label><input type="radio" name="crowd" value="长卡司机"> 长卡司机</label>
+            <label><input type="radio" name="crowd" value="公共场所从业人员"> 公共场所从业人员</label>
+            <label><input type="radio" name="crowd" value="入境体检者"> 入境体检者</label>
+            <label><input type="radio" name="crowd" value="出境体检者"> 出境体检者</label>
+            <label><input type="radio" name="crowd" value="临床可疑者"> 临床可疑者</label>
+            <label><input type="radio" name="crowd" value="义务献血员"> 义务献血员</label>
+            <label><input type="radio" name="crowd" value="羁押人员"> 羁押人员</label>
+            <label><input type="radio" name="crowd" value="新兵体检"> 新兵体检</label>
+            <label><input type="radio" name="crowd" value="职业暴露"> 职业暴露</label>
+            <label><input type="radio" name="crowd" value="医院无关联检测者"> 医院无关联检测者</label>
+            <label><input type="radio" name="crowd" value="自愿咨询"> 自愿咨询</label>
+            <label><input type="radio" name="crowd" value="不详"> 不详</label>
+            <label><input type="radio" name="crowd" value="其他"> 其他</label>
+            <input type="text" name="crowdOther" maxlength="10" placeholder="(请注明)">
+        </div>
+    </div>
+
+    <h2>5. 样本来源<span class="required">*</span></h2>
+    <div class="block">
+        <div class="item-gap1 radio-sample">
+            <label><input type="radio" name="sample" value="术前检测"> 术前检测</label>
+            <label><input type="radio" name="sample" value="受血(制品)前检测"> 受血(制品)前检测</label>
+            <label><input type="radio" name="sample" value="性病门诊"> 性病门诊</label>
+            <label><input type="radio" name="sample" value="其他就诊者检测"> 其他就诊者检测</label>
+            <label><input type="radio" name="sample" value="婚前检查(含涉外婚姻)"> 婚前检查(含涉外婚姻)</label>
+            <label><input type="radio" name="sample" value="孕产期检查"> 孕产期检查</label>
+            <label><input type="radio" name="sample" value="检测咨询"> 检测咨询</label>
+            <label><input type="radio" name="sample" value="阳性者配偶或性伴检测"> 阳性者配偶或性伴检测</label>
+            <label><input type="radio" name="sample" value="女性阳性者子女检测"> 女性阳性者子女检测</label>
+            <label><input type="radio" name="sample" value="职业暴露检测"> 职业暴露检测</label>
+            <label><input type="radio" name="sample" value="娱乐场所人员体检"> 娱乐场所人员体检</label>
+            <label><input type="radio" name="sample" value="有偿供血(浆)人员检测"> 有偿供血(浆)人员检测</label>
+            <label><input type="radio" name="sample" value="无偿供血(浆)人员检测"> 无偿供血(浆)人员检测</label>
+            <label><input type="radio" name="sample" value="出入境人员体检"> 出入境人员体检</label>
+            <label><input type="radio" name="sample" value="新兵体检"> 新兵体检</label>
+            <label><input type="radio" name="sample" value="强制/劳教人员检测"> 强制/劳教人员检测</label>
+            <label><input type="radio" name="sample" value="妇教所/女劳收教人员检测"> 妇教所/女劳收教人员检测</label>
+            <label><input type="radio" name="sample" value="其他羁押人员体检"> 其他羁押人员体检</label>
+            <label><input type="radio" name="sample" value="专题调查"> 专题调查</label>
+            <label><input type="radio" name="sample" value="其他"> 其他</label>
+            <input type="text" name="sampleOther" maxlength="10" placeholder="（请注明）">
+        </div>
+    </div>
+
+    <h2>6. 分析研判</h2>
+    <div class="block">
+        <div class="row">
+            <label><span class="bold-text">6.1 最可能的感染途径：</label>
+            <div class="item-gap1 radio-infect-way">
+                <label><input type="radio" name="infectWay" value="注射毒品"> 注射毒品</label>
+                <label><input type="radio" name="infectWay" value="异性传播"> 异性传播</label>
+                <label><input type="radio" name="infectWay" value="同性传播"> 同性传播</label>
+                <label><input type="radio" name="infectWay" value="性接触+注射毒品"> 性接触+注射毒品</label>
+                <label><input type="radio" name="infectWay" value="采血(浆)"> 采血(浆)</label>
+                <label><input type="radio" name="infectWay" value="输血/血制品"> 输血/血制品</label>
+                <label><input type="radio" name="infectWay" value="母婴传播"> 母婴传播</label>
+                <label><input type="radio" name="infectWay" value="职业暴露"> 职业暴露</label>
+                <label><input type="radio" name="infectWay" value="不详"> 不详</label>
+                <label><input type="radio" name="infectWay" value="其他"> 其他</label>
+                <input type="text" name="infectWayOther" maxlength="10" placeholder="(请注明)">
+            </div>
+        </div>
+        <div class="row">
+            <label><span class="bold-text">6.2 感染时间推断：</label>
+            <div class="item-group radio-infect-time">
+                <label><input type="radio" name="infectTime" value="1年内"> 1年内</label>
+                <label><input type="radio" name="infectTime" value="1年以上"> 1年以上</label>
+                <label><input type="radio" name="infectTime" value="不清楚"> 不清楚</label>
+            </div>
+        </div>
+        <div class="row">
+            <label><span class="bold-text">6.3 感染地点推断：</label>
+            <div class="item-group radio-infect-area">
+                <label><input type="radio" name="infectArea" value="外省"> 外省</label>
+                <label><input type="radio" name="infectArea" value="本省"> 本省</label>
+                <label><input type="radio" name="infectArea" value="本市"> 本市</label>
+                <label><input type="radio" name="infectArea" value="不清楚"> 不清楚</label>
+            </div>
+        </div>
+    </div>
+
+<h2>7 高危行为接触者</h2>
+<!-- 新增和8模块相同的边框容器 class="block" -->
+<div class="block">
+    <div class="row" style="align-items:center;gap:12px;flex-wrap:wrap;">
+        <label>姓名：</label>
+        <input type="text" name="partnerName" maxlength="4" value="/">
+
+        <label>性别：</label>
+        <select name="partnerSex">
+            <option value="">请选择</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+        </select>
+
+        <label>年龄(岁)：</label>
+        <input type="text" name="partnerAge" maxlength="3">
+
+        <label>接触方式：</label>
+        <select name="partnerContactType">
+            <option value="">请选择</option>
+            <option value="配偶">配偶</option>
+            <option value="异性固定">异性固定</option>
+            <option value="异性临时">异性临时</option>
+            <option value="异性商业">异性商业</option>
+            <option value="男同固定">男同固定</option>
+            <option value="男同临时">男同临时</option>
+            <option value="男同商业">男同商业</option>
+            <option value="共用针具吸毒">共用针具吸毒</option>
+        </select>
+
+        <label>居住地：</label>
+<input type="text" name="partnerAddr" maxlength="10">
+
+<label>暴露地：</label>
+<input type="text" name="partnerExposePlace" maxlength="10">
+</div>
+<div class="row">
+    <label>末次高危行为时间：</label>
+    <input type="text" name="partnerLastRiskTime" maxlength="6" placeholder="*年*月">
+    <label>备注：</label> 
+    <input type="text" name="surveyRemark" maxlength="30" placeholder="注明筛查时间及筛查结果；联系方式">
+</div>
+
+   <h2>8 其他高危行为接触者</h2>
+<div class="block">
+    <div class="row">
+        <label>接触人数：</label>
+        <input type="number" id="contactCount" placeholder="填写数字自动生成行" oninput="limitNumLength(this,10)">
+        <button id="genBtn">生成接触者条目</button>
+    </div>
+    <div id="contactBox"></div>
+</div>
+
+<h2>9 青年学生</h2>
+<div class="block">
+    <div class="row">
+        <label><strong>9.1性行为</strong>：</label>
+        <label><strong>①确诊前是否发生过性行为</strong>：</label>
+        <div class="item-group">
+            <label><input type="radio" name="stuSexHappened" value="否"> 否</label>
+            <label><input type="radio" name="stuSexHappened" value="同性性行为"> 同性性行为</label>
+            <label><input type="radio" name="stuSexHappened" value="异性性行为"> 异性性行为</label>
+            <label><input type="radio" name="stuSexHappened" value="都有"> 都有</label>
+        </div>
+    </div>
+   
+    <div class="row">
+        <label><strong>②首次性行为年龄</strong>：</label>
+        <label>同性：</label>
+        <input type="text" name="stuFirstSameAge" maxlength="3" value="/">
+        <span>岁</span>
+        <label>异性：</label>
+        <input type="text" name="stuFirstDiffAge" maxlength="3" value="/">
+        <span>岁</span>
+    </div>
+   
+    <div class="row">
+        <label><strong>③首个性伴是</strong>：</label>
+        <label>同性：</label>
+        <select name="stuFirstSamePartner">
+            <option value="">请选择</option>
+            <option value="中国籍学生">中国籍学生</option>
+            <option value="中国籍老师">中国籍老师</option>
+            <option value="中国籍其他">中国籍其他</option>
+            <option value="外籍学生">外籍学生</option>
+            <option value="外籍老师">外籍老师</option>
+            <option value="外籍其他">外籍其他</option>
+            <option value="不清楚">不清楚</option>
+        </select>
+        <label>异性：</label>
+        <select name="stuFirstDiffPartner">
+            <option value="">请选择</option>
+            <option value="中国籍学生">中国籍学生</option>
+            <option value="中国籍老师">中国籍老师</option>
+            <option value="中国籍其他">中国籍其他</option>
+            <option value="外籍学生">外籍学生</option>
+            <option value="外籍老师">外籍老师</option>
+            <option value="外籍其他">外籍其他</option>
+            <option value="不清楚">不清楚</option>
+        </select>
+    </div>
+    
+    <div class="row">
+        <label><strong>④确诊前性伴人数</strong>：</label>
+        <label>同性：</label>
+        <input type="text" name="stuSameNum" maxlength="4" value="/">
+        <span>人，其中商业性性行为：</span>
+        <input type="text" name="stuSameBusinessNum" maxlength="4" value="/">
+        <span>人；</span>
+        <label>异性：</label>
+        <input type="text" name="stuDiffNum" maxlength="4" value="/">
+        <span>人，其中商业性性行为：</span>
+        <input type="text" name="stuDiffBusinessNum" maxlength="4" value="/">
+        <span>人</span>
+    </div>
+    
+    <!-- ⑤：标题和同性同行，中间无空白间隔 -->
+    <div class="row">
+        <label><strong>⑤确诊前的性伴有：</strong></label>
+        <!-- 同性行：文字紧贴第一个复选框，无空隙 -->
+        <span style="display:inline-block;width:60px;text-align:right;">同性：</span><label><input type="checkbox" name="stuSamePartnerType" value="中国籍学生">中国籍学生</label>&nbsp;&nbsp;
+        <label><input type="checkbox" name="stuSamePartnerType" value="中国籍老师">中国籍老师</label>&nbsp;&nbsp;
+        <label><input type="checkbox" name="stuSamePartnerType" value="中国籍其他">中国籍其他</label>&nbsp;&nbsp;
+        <label><input type="checkbox" name="stuSamePartnerType" value="外籍学生">外籍学生</label>&nbsp;&nbsp;
+        <label><input type="checkbox" name="stuSamePartnerType" value="外籍老师">外籍老师</label>&nbsp;&nbsp;
+        <label><input type="checkbox" name="stuSamePartnerType" value="外籍其他">外籍其他</label>&nbsp;&nbsp;
+        <label><input type="checkbox" name="stuSamePartnerType" value="不清楚">不清楚</label>
+        <div style="margin:4px 0;">
+            <!-- 异性行，和同性左对齐，紧贴复选框 -->
+            <span style="display:inline-block;width:60px;text-align:right;">异性：</span><label><input type="checkbox" name="stuDiffPartnerType" value="中国籍学生">中国籍学生</label>&nbsp;&nbsp;
+            <label><input type="checkbox" name="stuDiffPartnerType" value="中国籍老师">中国籍老师</label>&nbsp;&nbsp;
+            <label><input type="checkbox" name="stuDiffPartnerType" value="中国籍其他">中国籍其他</label>&nbsp;&nbsp;
+            <label><input type="checkbox" name="stuDiffPartnerType" value="外籍学生">外籍学生</label>&nbsp;&nbsp;
+            <label><input type="checkbox" name="stuDiffPartnerType" value="外籍老师">外籍老师</label>&nbsp;&nbsp;
+            <label><input type="checkbox" name="stuDiffPartnerType" value="外籍其他">外籍其他</label>&nbsp;&nbsp;
+            <label><input type="checkbox" name="stuDiffPartnerType" value="不清楚">不清楚</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <label><strong>⑥认识性伴的方式</strong>：</label>
+        <label>同性：</label>
+        <select name="stuSameMeetWay">
+            <option value="">请选择</option>
+            <option value="交友软件(微信、QQ等)">交友软件(微信、QQ等)</option>
+            <option value="线下认识(校园、酒吧、浴池、公园等场所)">线下认识(校园、酒吧、浴池、公园等场所)</option>
+            <option value="两者都有">两者都有</option>
+        </select>
+        <label>异性：</label>
+        <select name="stuDiffMeetWay">
+            <option value="">请选择</option>
+            <option value="交友软件(微信、QQ等)">交友软件(微信、QQ等)</option>
+            <option value="线下认识(校园、酒吧、浴池、公园等场所)">线下认识(校园、酒吧、浴池、公园等场所)</option>
+            <option value="两者都有">两者都有</option>
+        </select>
+    </div>
+
+    <div class="row">
+        <label><strong>⑦认识性伴最主要的方式</strong>：</label>
+        <label>同性：</label>
+        <select name="stuSameMainWay">
+            <option value="">请选择</option>
+            <option value="交友软件">交友软件</option>
+            <option value="线下认识">线下认识</option>
+        </select>
+        <label>异性：</label>
+        <select name="stuDiffMainWay">
+            <option value="">请选择</option>
+            <option value="交友软件">交友软件</option>
+            <option value="线下认识">线下认识</option>
+        </select>
+    </div>
+
+    <div class="row">
+        <label><strong>⑧确诊前使用安全套</strong>：</label>
+        <label>同性：</label>
+        <select name="stuSameCondom">
+            <option value="">请选择</option>
+            <option value="从不使用">从不使用</option>
+            <option value="偶尔使用">偶尔使用</option>
+            <option value="每次都用">每次都用</option>
+        </select>
+        <label>异性：</label>
+        <select name="stuDiffCondom">
+            <option value="">请选择</option>
+            <option value="从不使用">从不使用</option>
+            <option value="偶尔使用">偶尔使用</option>
+            <option value="每次都用">每次都用</option>
+        </select>
+    </div>
+
+   <div class="row">
+    <label><span class="bold-text">9.2 学校类型：</span>
+    <select name="stuSchoolType">
+        <option value="">请选择</option>
+        <option value="初中">初中</option>
+        <option value="高中">高中</option>
+        <option value="中专">中专</option>
+        <option value="技校">技校</option>
+        <option value="职高">职高</option>
+        <option value="大专">大专</option>
+        <option value="大学">大学</option>
+        <option value="科研院校">科研院校</option>
+        <option value="其他">其他</option>
+    </select>
+    <input type="text" name="stuSchoolOther" maxlength="10" placeholder="其他请注明">
+
+    <!-- 新增在校情况下拉+输入框 -->
+    <label style="margin-left:15px;">在校情况：</label>
+    <select name="stuSchoolStatus">
+        <option value="">请选择</option>
+        <option value="在读">在读</option>
+        <option value="休学">休学</option>
+        <option value="已毕业">已毕业</option>
+        <option value="其他">其他</option>
+    </select>
+    <input type="text" name="stuSchoolStatusOther" maxlength="8" value="/">
+
+    <label style="margin-left:15px;">现住址居住时间(住校时间)：</label>
+    <select name="stuLiveTime">
+        <option value="">请选择</option>
+        <option value="<6个月">&lt;6个月</option>
+        <option value="6-12个月">6-12个月</option>
+        <option value="1-2年">1-2年</option>
+        <option value=">2年">&gt;2年</option>
+    </select>
+</div>
+</div>
+
+<div class="row">
+    <label>调查单位：</label>
+    <input type="text" name="surveyUnit" maxlength="10">
+    <label>调查人：</label>
+    <input type="text" name="surveyUser" maxlength="4">
+    <label>调查日期<span class="required">*</span>：</label>
+    <input type="date" name="surveyDate">
+     <label>备注：</label>
+    <input type="text" name="surveyUnit" maxlength="30">
+</div>
+
+    <!-- 历史数据弹窗 -->
+    <div class="mask" id="historyMask">
+        <div class="modal">
+            <h2>历史调查记录</h2>
+            <div id="historyList"></div>
+            <div style="margin-top:15px;text-align:right;">
+                <button onclick="closeHistoryModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
 <script>
-const STOCK_KEY = "stock_data";
-const RECORD_KEY = "record_data";
-let editKey = "";
+// ========== 收集表单全部数据 ==========
+function collectFormData() {
+    // 先获取所有基础数据
+    const data = {};
 
-// 获取当前标准日期 yyyy-mm-dd
-function getNowDate(){
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${day}`;
-}
-// 展示格式化 2026/6/19
-function formatShow(dStr){
-    if(!dStr){
-        const d = new Date();
-        return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-    }
-    const d = new Date(dStr);
-    return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-}
-function getStorage(key){
-    let s = localStorage.getItem(key);
-    if(!s) return key === STOCK_KEY ? {} : [];
-    try{return JSON.parse(s);}catch{return key === STOCK_KEY ? {} : [];}
-}
-function setStorage(key,val){
-    localStorage.setItem(key,JSON.stringify(val));
-}
-function getDayDiff(s,e){
-    if(!s||!e)return null;
-    const a=new Date(s),b=new Date(e);
-    return Math.ceil((b-a)/(1000*60*60*24));
-}
-function getMonthDiff(s,e){
-    if(!s||!e)return null;
-    const a=new Date(s),b=new Date(e);
-    let m=(b.getFullYear()-a.getFullYear())*12;
-    m+=b.getMonth()-a.getMonth();
-    if(b.getDate()<a.getDate())m--;
-    return m;
-}
-
-// 新增：清理库存中数量≤0的项
-function cleanZeroStock() {
-    const stock = getStorage(STOCK_KEY);
-    for (let k in stock) {
-        if (stock[k].num <= 0) {
-            delete stock[k];
+    // 1. 收集所有普通input/select基础数据
+    document.querySelectorAll('input[name], select[name]').forEach(el => {
+        if (el.type === 'radio' || el.type === 'checkbox') {
+            if (el.checked) {
+                if (!data[el.name]) data[el.name] = [];
+                data[el.name].push(el.value);
+            }
+        } else {
+            data[el.name] = el.value;
         }
-    }
-    setStorage(STOCK_KEY, stock);
-}
-
-// 导出备份
-function exportAllData(){
-    const stock=getStorage(STOCK_KEY);
-    const records=getStorage(RECORD_KEY);
-    const obj={stock,records,exportTime:getNowDate()};
-    const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download=`物资备份_${getNowDate()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert("备份已下载，请保存");
-}
-// 导入备份
-function importAllData(dom){
-    const f=dom.files[0];
-    if(!f){dom.value="";return;}
-    const r=new FileReader();
-    r.onload=function(ev){
-        try{
-            const data=JSON.parse(ev.target.result);
-            if(!data.stock||!data.records){alert("备份文件格式错误");return;}
-            if(!confirm("导入覆盖现有数据？")){dom.value="";return;}
-            setStorage(STOCK_KEY,data.stock);
-            setStorage(RECORD_KEY,data.records);
-            // 导入后清理0库存
-            cleanZeroStock();
-            loadType();renderStock();renderRecord();
-            alert("导入成功");
-        }catch(err){alert("文件损坏");}
-        dom.value="";
-    }
-    r.readAsText(f);
-}
-function toggleCustomDept(){
-    const sel=document.getElementById("out_dept");
-    document.getElementById("custom_dept").classList.toggle("hide",sel.value!=="其他");
-}
-function getDept(){
-    const v=document.getElementById("out_dept").value.trim();
-    return v==="其他"?document.getElementById("custom_dept").value.trim():v;
-}
-function trim(s){return String(s).trim();}
-function clearOutValid(){
-    document.getElementById("out_valid_show").value="";
-    document.getElementById("show_stock").value="";
-}
-function showStockAndValid(){
-    const t=trim(document.getElementById("out_type").value);
-    const f=trim(document.getElementById("out_factory").value);
-    const spec=trim(document.getElementById("out_spec").value);
-    const stock=getStorage(STOCK_KEY);
-    const k=`${t}_${f}_${spec}`;
-    if(stock[k])document.getElementById("out_valid_show").value=stock[k].validDate||"无";
-    document.getElementById("show_stock").value=stock[k]?.num||0;
-}
-function loadType(){
-    const sel=document.getElementById("out_type");
-    sel.innerHTML="<option value=''>请选择类别</option>";
-    const stock=getStorage(STOCK_KEY);
-    const set=new Set();
-    for(let k in stock)set.add(stock[k].type);
-    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
-    document.getElementById("out_factory").innerHTML="<option value=''>请选择厂家</option>";
-    document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
-    clearOutValid();
-}
-function loadFactory(){
-    const t=trim(document.getElementById("out_type").value);
-    const sel=document.getElementById("out_factory");
-    sel.innerHTML="<option value=''>请选择厂家</option>";
-    const stock=getStorage(STOCK_KEY);
-    const set=new Set();
-    for(let k in stock)if(stock[k].type===t)set.add(stock[k].factory);
-    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
-    document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
-    clearOutValid();
-}
-function loadSpec(){
-    const t=trim(document.getElementById("out_type").value);
-    const f=trim(document.getElementById("out_factory").value);
-    const sel=document.getElementById("out_spec");
-    sel.innerHTML="<option value=''>请选择规格</option>";
-    const stock=getStorage(STOCK_KEY);
-    const set=new Set();
-    for(let k in stock)if(stock[k].type===t&&stock[k].factory===f)set.add(stock[k].spec);
-    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
-    clearOutValid();
-}
-function clearInInput(){
-    ["in_type","in_factory","in_spec","in_num","in_valid_date","in_note"].forEach(id=>document.getElementById(id).value="");
-    editKey="";
-    document.getElementById("editTip").innerText="";
-}
-function resetOut(){
-    ["out_num","out_date","out_note","custom_dept","show_stock","out_valid_show","out_user"].forEach(id=>document.getElementById(id).value="");
-    document.getElementById("out_dept").value="";
-    document.getElementById("out_type").innerHTML="<option value=''>请选择类别</option>";
-    document.getElementById("out_factory").innerHTML="<option value=''>请选择厂家</option>";
-    document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
-    toggleCustomDept();
-    loadType();
-}
-// 入库
-function stockIn(){
-    const t=trim(document.getElementById("in_type").value);
-    const f=trim(document.getElementById("in_factory").value);
-    const spec=trim(document.getElementById("in_spec").value);
-    const num=Number(trim(document.getElementById("in_num").value));
-    const valid=document.getElementById("in_valid_date").value;
-    const note=trim(document.getElementById("in_note").value);
-    if(!t||!f||!spec||num<=0){alert("请填写完整信息，数量大于0");return;}
-    const key=`${t}_${f}_${spec}`;
-    const stock=getStorage(STOCK_KEY);
-    if(editKey&&editKey!==key)delete stock[editKey];
-    stock[key]={type:t,factory:f,spec:spec,num:num,validDate:valid};
-    setStorage(STOCK_KEY,stock);
-    // 入库后清理0库存
-    cleanZeroStock();
-    const records=getStorage(RECORD_KEY);
-    records.unshift({
-        time:formatShow(""),rawTime:getNowDate(),
-        type:t,factory:f,spec:spec,num:num,validDate:valid,
-        dept:"",user:"",opt:"入库",note:note,outTime:""
     });
-    setStorage(RECORD_KEY,records);
-    renderStock();renderRecord();clearInInput();loadType();
-    alert(editKey?"修改成功":"入库成功");
-}
-// 出库
-function stockOut(){
-    try{
-        const t=trim(document.getElementById("out_type").value);
-        const f=trim(document.getElementById("out_factory").value);
-        const spec=trim(document.getElementById("out_spec").value);
-        const num=Number(trim(document.getElementById("out_num").value));
-        const dept=getDept();
-        const user=trim(document.getElementById("out_user").value);
-        const stockNum=Number(document.getElementById("show_stock").value);
-        const valid=document.getElementById("out_valid_show").value==="无"?null:document.getElementById("out_valid_show").value;
-        const dVal=document.getElementById("out_date").value;
-        if(!t||!f||!spec||num<=0||!dept||!user){alert("填写完整出库信息");return;}
-        if(stockNum<num){alert("库存不足");return;}
-        const key=`${t}_${f}_${spec}`;
-        const stock=getStorage(STOCK_KEY);
-        stock[key].num-=num;
-        // 确保库存为0时删除
-        if(stock[key].num <= 0) delete stock[key];
-        setStorage(STOCK_KEY,stock);
-        // 出库后清理0库存
-        cleanZeroStock();
-        const records=getStorage(RECORD_KEY);
-        records.unshift({
-            time:formatShow(dVal),rawTime:dVal||getNowDate(),
-            type:t,factory:f,spec:spec,num:num,validDate:valid,
-            dept:dept,user:user,opt:"出库",note:"",outTime:dVal
-        });
-        setStorage(RECORD_KEY,records);
-        renderStock();renderRecord();resetOut();
-        alert("出库成功");
-    }catch(e){alert("操作异常："+e.message);}
-}
-// 删除单条记录
-function delRec(idx){
-    const records=getStorage(RECORD_KEY);
-    const item=records[idx];
-    const k=`${item.type}_${item.factory}_${item.spec}`;
-    const stock=getStorage(STOCK_KEY);
-    if(!confirm("删除本条记录，库存同步回滚？"))return;
-    if(item.opt==="入库"){
-        if(stock[k]){stock[k].num-=item.num;if(stock[k].num<=0)delete stock[k];}
-    }else{
-        if(!stock[k])stock[k]={type:item.type,factory:item.factory,spec:item.spec,num:0,validDate:item.validDate};
-        stock[k].num+=item.num;
-    }
-    setStorage(STOCK_KEY,stock);
-    // 删除记录后清理0库存
-    cleanZeroStock();
-    records.splice(idx,1);
-    setStorage(RECORD_KEY,records);
-    renderStock();renderRecord();loadType();
-}
-// 清空全部记录（同步清空库存）
-function delAllRecords(){
-    if(!confirm("确认清空所有操作记录和库存数据？此操作不可恢复！"))return;
-    // 清空库存数据
-    setStorage(STOCK_KEY, {});
-    // 清空操作记录数据
-    setStorage(RECORD_KEY, []);
-    // 重新渲染页面（清空表格）
-    renderStock();
-    renderRecord();
-    // 重新加载出库的类别下拉框（清空后无数据）
-    loadType();
-    alert("操作记录和库存数据已全部清空");
-}
-// 打开编辑弹窗
-function openEditModal(idx){
-    const records=getStorage(RECORD_KEY);
-    const item=records[idx];
-    document.getElementById("editIndex").value=idx;
-    document.getElementById("editOptType").value=item.opt;
-    document.getElementById("editType").value=item.type;
-    document.getElementById("editFactory").value=item.factory;
-    document.getElementById("editSpec").value=item.spec;
-    document.getElementById("editNum").value=item.num;
-    document.getElementById("editValid").value=item.validDate||"";
-    document.getElementById("editTime").value=item.rawTime||"";
-    document.getElementById("editDept").value=item.dept||"";
-    document.getElementById("editUser").value=item.user||"";
-    document.getElementById("editNote").value=item.note||"";
-    document.getElementById("editModal").style.display="flex";
-}
-function closeEditModal(){
-    document.getElementById("editModal").style.display="none";
-}
-function saveEditRecord(){
-    const idx=Number(document.getElementById("editIndex").value);
-    const records=getStorage(RECORD_KEY);
-    const old=records[idx];
-    const oldKey=`${old.type}_${old.factory}_${old.spec}`;
-    let stock=getStorage(STOCK_KEY);
-    // 撤销旧数据
-    if(old.opt==="入库"){
-        if(stock[oldKey]){
-            stock[oldKey].num-=old.num;
-            if(stock[oldKey].num<=0) delete stock[oldKey];
-        }
-    }else{
-        if(!stock[oldKey]) stock[oldKey]={type:old.type,factory:old.factory,spec:old.spec,num:0,validDate:old.validDate};
-        stock[oldKey].num+=old.num;
-    }
-    setStorage(STOCK_KEY,stock);
-    // 新数据
-    const t=trim(document.getElementById("editType").value);
-    const f=trim(document.getElementById("editFactory").value);
-    const spec=trim(document.getElementById("editSpec").value);
-    const num=Number(document.getElementById("editNum").value);
-    const valid=document.getElementById("editValid").value||null;
-    const dVal=document.getElementById("editTime").value;
-    const dept=trim(document.getElementById("editDept").value);
-    const user=trim(document.getElementById("editUser").value);
-    const note=trim(document.getElementById("editNote").value);
-    if(!t||!f||!spec||num<=0){alert("信息不全");return;}
-    const newKey=`${t}_${f}_${spec}`;
-    stock=getStorage(STOCK_KEY);
-    if(!stock[newKey]) stock[newKey]={type:t,factory:f,spec:spec,num:0,validDate:valid};
-    if(document.getElementById("editOptType").value==="入库"){
-        stock[newKey].num+=num;
-    }else{
-        if(stock[newKey].num<num){alert("库存不足");return;}
-        stock[newKey].num-=num;
-        if(stock[newKey].num<=0) delete stock[newKey];
-    }
-    setStorage(STOCK_KEY,stock);
-    // 编辑后清理0库存
-    cleanZeroStock();
-    records[idx]={
-        time:formatShow(dVal),rawTime:dVal||getNowDate(),
-        type:t,factory:f,spec:spec,num:num,validDate:valid,
-        dept:dept,user:user,opt:document.getElementById("editOptType").value,note:note,outTime:dVal
-    };
-    setStorage(RECORD_KEY,records);
-    closeEditModal();renderStock();renderRecord();loadType();
-    alert("修改完成");
-}
-// 渲染库存（无操作按钮）
-function renderStock(){
-    // 渲染前先清理0库存
-    cleanZeroStock();
-    const today=getNowDate();
-    const stock=getStorage(STOCK_KEY);
-    const tbody=document.querySelector("#stock_table tbody");
-    tbody.innerHTML="";
-    for(let k in stock){
-        const item=stock[k];
-        const num=item.num;
-        const vd=item.validDate;
-        let vText="-",vCls="";
-        if(vd){
-            const diff=getDayDiff(today,vd);
-            if(diff<0){vText="已过期";vCls="low-valid";}
-            else if(diff<30){vText="近30天到期";vCls="low-valid";}
-            else vText=getMonthDiff(today,vd)+"个月";
-        }
-        tbody.innerHTML+=`<tr>
-            <td>${item.type}</td>
-            <td>${item.factory}</td>
-            <td>${item.spec}</td>
-            <td class="${num<100?'low-stock':''}">${num}</td>
-            <td class="${vCls}">${vText}</td>
-        </tr>`;
-    }
-}
-// 渲染记录（保留操作）
-function renderRecord(){
-    const records=getStorage(RECORD_KEY);
-    const tbody=document.querySelector("#record_table tbody");
-    tbody.innerHTML="";
-    records.forEach((item,i)=>{
-        const c=item.opt==="入库"?"#00b42a":"#ff7700";
-        const v=item.validDate||"-";
-        const dt=item.outTime?formatShow(item.outTime):"-";
-        tbody.innerHTML+=`<tr>
-            <td>${item.time}</td>
-            <td>${item.type}</td>
-            <td>${item.factory}</td>
-            <td>${item.spec}</td>
-            <td>${item.num}</td>
-            <td>${v}</td>
-            <td>${dt}</td>
-            <td>${item.dept||"-"}</td>
-            <td>${item.user||"-"}</td>
-            <td style="color:${c}">${item.opt}</td>
-            <td>${item.note||"-"}</td>
-            <td>
-                <button class="btn-edit" onclick="openEditModal(${i})">编辑</button>
-                <button class="btn-del" onclick="delRec(${i})">删</button>
-            </td>
-        </tr>`;
-    })
-}
-// 导出CSV
-function exportRecord(){
-    const records=getStorage(RECORD_KEY);
-    if(records.length===0){alert("无记录");return;}
-    let csv="操作时间,类别,厂家,规格,数量,效期截止日,时间,领用单位,领用人,类型,经办人\n";
-    records.forEach(it=>{
-        const v=it.validDate||"";
-        const d=it.outTime?formatShow(it.outTime):"";
-        csv+=`"${it.time}","${it.type}","${it.factory}","${it.spec}","${it.num}","${v}","${d}","${it.dept||""}","${it.user||""}","${it.opt}","${it.note||""}"\n`;
+
+    // 2. 供血史-首次全血强制收集
+    data.firstWholeBloodTime = document.querySelector('input[name="firstWholeBloodTime"]')?.value || "";
+    data.firstWholeBloodAddr = document.querySelector('input[name="firstWholeBloodAddr"]')?.value || "";
+    data.firstWholeBloodUnit = document.querySelector('input[name="firstWholeBloodUnit"]')?.value || "";
+
+    // 3. 3.3密接有无相关症状单选收集
+    data.closeContactSymptom = document.querySelector('input[name="closeContactSymptom"]:checked')?.value || "";
+
+    // 4. 青年学生9.2新增字段收集
+    data.stuSchoolType = document.querySelector('select[name="stuSchoolType"]')?.value || "";
+    data.stuSchoolOther = document.querySelector('input[name="stuSchoolOther"]')?.value || "";
+    data.stuLiveTime = document.querySelector('select[name="stuLiveTime"]')?.value || "";
+    data.stuSchoolStatus = document.querySelector('select[name="stuSchoolStatus"]')?.value || "";
+    data.stuSchoolStatusOther = document.querySelector('input[name="stuSchoolStatusOther"]')?.value || "";
+
+    // 5. 主表单姓名
+    data.investigateeName = document.getElementById('investigateeName')?.value || "";
+
+    // 6. 多条接触者批量收集数组
+    const contactArr = [];
+    document.querySelectorAll(".contact-line").forEach((block, idx) => {
+        const i = idx;
+        const contactObj = {
+            contactType: block.querySelector(`input[name="contactType${i}"]:checked`)?.value || "",
+            name: block.querySelector(`input[name="contactName${i}"]`)?.value || "",
+            sex: block.querySelector(`input[name="contactSex${i}"]`)?.value || "",
+            age: block.querySelector(`input[name="contactAge${i}"]`)?.value || "",
+            tel: block.querySelector(`input[name="contactTel${i}"]`)?.value || "",
+            social: block.querySelector(`input[name="contactSocial${i}"]`)?.value || "",
+            addr: block.querySelector(`input[name="contactAddr${i}"]`)?.value || "",
+            exposeAddr: block.querySelector(`input[name="contactExposeAddr${i}"]`)?.value || "",
+            lastRisk: block.querySelector(`input[name="contactLastRisk${i}"]`)?.value || "",
+            notifyType: block.querySelector(`input[name="notify${i}"]:checked`)?.value || "",
+            notifyRemark: block.querySelector(`input[name="notifyRemark${i}"]`)?.value || "",
+            trackResult: block.querySelector(`input[name="track${i}"]:checked`)?.value || "",
+            trackCardId: block.querySelector(`input[name="trackCardId${i}"]`)?.value || ""
+        };
+        contactArr.push(contactObj);
     });
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download=`出入库记录_${getNowDate()}.csv`;
+    data.contactList = contactArr;
+
+    return data;
+}
+
+// ========== 清除全部表单界面 ==========
+function clearAllForm() {
+    if (!confirm("确定清空当前页面所有填写内容？操作不可恢复")) return;
+    document.querySelectorAll('textarea').forEach(text=>text.value="");
+    document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
+        input.checked = false;
+    });
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]').forEach(input => {
+        input.value = "";
+    });
+    const contactBox = document.getElementById("contactBox");
+    if (contactBox) contactBox.innerHTML = "";
+    const countInput = document.getElementById("contactCount");
+    if (countInput) countInput.value = "";
+    const nameInput = document.getElementById('investigateeName');
+    if(nameInput) nameInput.value = "";
+    alert("已清空全部表单内容");
+}
+
+// ========== 7模块 生成接触者 ==========
+function createContactLine() {
+    const numInput = document.getElementById("contactCount");
+    const box = document.getElementById("contactBox");
+    box.innerHTML = "";
+    let num = Number(numInput.value);
+    if (isNaN(num) || num < 1) {
+        alert("请输入大于0的数字");
+        return;
+    }
+    for (let i = 0; i < num; i++) {
+        const line = document.createElement("div");
+        line.className = "contact-line";
+        line.innerHTML = `
+           <h4>接触者${i+1}</h4>
+<div class="row">
+    <div class="radio-group" style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <span style="font-weight:bold;font-size:14px;">①接触方式：</span>
+        <label><input type="radio" name="contactType${i}" value="配偶（含前夫、前妻）"> 配偶（含前夫、前妻）</label>
+        <label><input type="radio" name="contactType${i}" value="异性固定性伴（≥6个月）"> 异性固定性伴（≥6个月）</label>
+        <label><input type="radio" name="contactType${i}" value="异性临时性伴(<6个月）"> 异性临时性伴(<6个月）</label>
+        <label><input type="radio" name="contactType${i}" value="异性商业性伴"> 异性商业性伴</label>
+        <label><input type="radio" name="contactType${i}" value="男性同性固定性伴"> 男性同性固定性伴</label>
+        <label><input type="radio" name="contactType${i}" value="男性同性临时性伴"> 男性同性临时性伴</label>
+        <label><input type="radio" name="contactType${i}" value="男性同性商业性伴"> 男性同性商业性伴</label>
+        <label><input type="radio" name="contactType${i}" value="共用针具静脉吸毒同伴"> 共用针具静脉吸毒同伴</label>
+    </div>
+</div>
+
+<div class="row">        
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <span style="font-weight:bold;font-size:14px;">②姓名/外号：</span>
+        <input type="text" name="contactName${i}" maxlength="8">
+        <label>性别：</label>
+        <input type="text" name="contactSex${i}" maxlength="2">
+        <label>年龄（岁）：</label>
+        <input type="text" name="contactAge${i}" maxlength="2">
+        <label>联系电话：</label>
+        <input type="text" name="contactTel${i}" maxlength="11">
+        <label>社交帐号：</label>
+        <input type="text" name="contactSocial${i}" maxlength="12">
+    </div>
+</div>
+
+<div class="row">        
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <span style="font-weight:bold;font-size:14px;">③居住地：</span>
+        <input type="text" name="contactAddr${i}" maxlength="30">
+        <label>暴露地：</label>
+        <input type="text" name="contactExposeAddr${i}" maxlength="30">
+        <label>末次高危行为：</label>
+        <!-- 改为年月选择框 -->
+        <input type="month" name="contactLastRisk${i}">
+    </div>
+</div>
+
+<div class="row">
+    <div class="radio-group" style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <span style="font-weight:bold;font-size:14px;">④告知方式：</span>
+        <label><input type="radio" name="notify${i}" value="自行告知"> 自行告知</label>
+        <label><input type="radio" name="notify${i}" value="协同告知"> 协同告知</label>
+        <label><input type="radio" name="notify${i}" value="联系卡告知"> 联系卡告知</label>
+        <label><input type="radio" name="notify${i}" value="授权告知"> 授权告知</label>
+    </div>
+    <input type="text" name="notifyRemark${i}" maxlength="10" placeholder="写明授权人/机构">
+</div>
+
+<div class="row">
+    <div class="radio-group" style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+        <span style="font-weight:bold;font-size:14px;">⑤追踪结局：</span>
+        <label><input type="radio" name="track${i}" value="新发现阳性"> 新发现阳性</label>
+        <label><input type="radio" name="track${i}" value="检测阴性"> 检测阴性</label>
+        <label><input type="radio" name="track${i}" value="窗口期待追踪"> 窗口期待追踪</label>
+        <label><input type="radio" name="track${i}" value="拒访"> 拒访</label>
+        <label><input type="radio" name="track${i}" value="无法联系"> 无法联系</label>
+        <label><input type="radio" name="track${i}" value="死亡"> 死亡</label>
+        <label><input type="radio" name="track${i}" value="既往阳性"> 既往阳性</label>
+    </div>
+    <input type="text" name="trackCardId${i}" maxlength="16" placeholder="注明报告卡ID">
+</div>
+`;
+        box.appendChild(line);
+    }
+}
+
+// ========== 保存本条记录 ==========
+function saveCurrentItem() {
+    const data = collectFormData();
+    let records = JSON.parse(localStorage.getItem("hiv_dc_records") || "[]");
+    records.push(data);
+    localStorage.setItem("hiv_dc_records", JSON.stringify(records));
+    alert("保存成功！可打开历史数据查看");
+}
+
+// ========== 最终完整导出Excel CSV ==========
+function exportExcel() {
+    const data = collectFormData();
+    let csv = "\uFEFF"; // 解决Excel中文乱码
+    const headers = [
+        // 原有表头全部保留，顺序不变
+        "被调查人", "文化程度","职业","民族","工作单位/学校","婚姻",
+        "配偶抗体检测","配偶检测年月","近1年性伴数量","性伴是否阳性","有无固定性伴",
+        "有无子女","子女检测结果","是否用药","药物名称","是否PEP阻断","PEP药物",
+        "是否检测CD4","CD4数值","HIV检测史","末次检测时间及结果","目前吸毒方式","首次吸毒时间","首次注射吸毒时间",
+        "是否共用针具","共用针具人数","成瘾性物质使用","配偶是否吸毒","性行为类型","非婚异性人数","肛交人数",
+        "最后一次性接触套情况","末次接触备注","上月异性性行为","从不戴套备注","有时戴套备注","每次都戴备注",
+        "半年肛交情况","性病史","受血类别","首次受血时间","首次受血地点","末次受血时间","末次受血地点",
+        "术前输血住院","有无供血史",
+        "首次全血时间","首次全血地点","首次全血采血单位",
+        "末次全血时间","末次全血地点","末次全血采血单位",
+        "首次血浆时间","首次血浆地点","首次血浆单位","末次血浆时间","末次血浆地点","末次血浆单位",
+        "暴露来源","暴露其他说明","暴露级别","是否药物阻断","阻断药名称",
+        "患儿母亲状态","患儿病例卡号","喂养方式","母婴阻断治疗","临床症状","症状其他说明",
+        "既往有无症状",
+        // 【新增】3.3 密接有无相关症状，和表单顺序完全一致
+        "3.3密接有无相关症状",
+        "人群类别","人群其他说明","样本来源","样本其他说明",
+        "感染途径","途径其他说明","感染时间推断","感染地点推断",
+        "接触人数","被调查人配偶或性伴","配偶性别","配偶年龄","接触方式","居住地","暴露地","末次高危行为时间","备注","调查单位","调查人","调查日期","创建时间戳",
+        "9青年学生-是否发生性行为",
+        "首次同性性行为年龄",
+        "首次异性性行为年龄",
+        "首个性伴同性类型",
+        "首个性伴异性类型",
+        "同性性伴总人数",
+        "同性商业性伴人数",
+        "异性性伴总人数",
+        "异性商业性伴人数",
+        "确诊前同性性伴类型",
+        "确诊前异性性伴类型",
+        "同性结识方式",
+        "异性结识方式",
+        "同性主要结识方式",
+        "异性主要结识方式",
+        "同性安全套使用",
+        "异性安全套使用",
+         // 【新增】9.2 学校类型、在校情况、住校时长相关5个字段，和表单顺序完全对应
+    "9.2学校类型",
+    "学校类型其他说明",
+    "在校情况",
+    "在校情况其他说明",
+    "现住址居住时间(住校时间)",
+];
+    csv += headers.join(",") + "\n";
+
+    // 【重点】row数组顺序和headers完全一一对应，无错位
+    const row = [
+        data.investigateeName || "",
+        data.culture||"", data.job||"", data.jobOther||"", data.workUnit||"", data.marry||"",
+        data.partnerTest||"", data.partnerTestDate||"", data.partnerNum||"", data.partnerHiv||"", data.fixedPartner||"",
+        (data.childHas||[]).join("、"), data.childTest||"", data.useDrug||"", data.drugName||"", data.pep||"", data.pepDrug||"",
+        data.cd4||"", data.cd4Num||"", data.stuHivTest || "",data.stuLastNegTime || "",data.drugWay||"", data.firstDrugTime||"", data.firstInjectDrugTime||"",
+        data.shareNeedle||"", data.shareNeedleNum||"", data.stuAddictSub || "",data.partnerDrug||"", (data.sexBehavior||[]).join("、"), data.heteroNum||"", data.analNum||"",
+        data.lastSex||"", data.lastSexRemark||"", (data.monthHetero||[]).join("、"), data.monthNoCondomRemark||"", data.monthSometimesRemark||"", data.monthAllRemark||"",
+        (data.halfYearAnal||[]).join("、"), data.std||"", (data.bloodType||[]).join("、"), data.firstBloodTime||"", data.firstBloodAddr||"", data.lastBloodTime||"", data.lastBloodAddr||"",
+        data.bloodHospital||"", 
+        data.bloodDonate||"", 
+        data.firstWholeBloodTime||"", 
+        data.firstWholeBloodAddr||"", 
+        data.firstWholeBloodUnit||"", 
+        data.lastWholeBloodTime||"",  
+        data.lastWholeBloodAddr||"",  
+        data.lastWholeBloodUnit||"",  
+        data.firstPlasmaTime||"", 
+        data.firstPlasmaAddr||"", 
+        data.firstPlasmaUnit||"", 
+        data.lastPlasmaTime||"", 
+        data.lastPlasmaAddr||"", 
+        data.lastPlasmaUnit||"",
+        data.exposeSrc||"", data.exposeSrcOther||"", data.exposeLevel||"", data.blockDrug||"", data.blockDrugName||"",
+        data.motherHiv||"", data.motherCardId||"", data.feed||"", data.babyBlock||"", (data.symptomList||[]).join("、"), data.symptomOther||"",
+        data.symptomHistory||"",
+        // 【新增】3.3 密接有无相关症状，和headers位置完全对应
+        data.closeContactSymptom || "",
+        data.crowd||"", data.crowdOther||"", data.sample||"", data.sampleOther||"",
+        data.infectWay||"", data.infectWayOther||"", data.infectTime||"", data.infectArea||"",
+        data.contactCount||"",
+        data.partnerName || "",
+        data.partnerSex || "",
+        data.partnerAge || "",
+        data.partnerContactType || "",
+        data.partnerAddr || "",
+        data.partnerExposePlace || "",
+        data.partnerLastRiskTime || "",
+        data.surveyRemark || "",
+        data.surveyUnit||"", data.surveyUser||"", data.surveyDate||"", data.createTime||"",
+        data.stuSexHappened || "",
+        data.stuFirstSameAge || "",
+        data.stuFirstDiffAge || "",
+        data.stuFirstSamePartner || "",
+        data.stuFirstDiffPartner || "",
+        data.stuSameNum || "",
+        data.stuSameBusinessNum || "",
+        data.stuDiffNum || "",
+        data.stuDiffBusinessNum || "",
+        (data.stuSamePartnerType||[]).join("、"),
+        (data.stuDiffPartnerType||[]).join("、"),
+        data.stuSameMeetWay || "",
+        data.stuDiffMeetWay || "",
+        data.stuSameMainWay || "",
+        data.stuDiffMainWay || "",
+        data.stuSameCondom || "",
+        data.stuDiffCondom || "",
+        // 【新增】9.2 学校类型相关3个字段，和headers位置完全对应
+       data.stuSchoolType || "",
+       data.stuSchoolOther || "",
+       data.stuSchoolStatus || "",
+       data.stuSchoolStatusOther || "",
+       data.stuLiveTime || "",
+    ];
+
+    // 处理CSV格式，解决逗号、引号、换行问题
+    csv += row.map(s=> `"${String(s).replace(/"/g,'""').replace(/\n/g,'\\n')}"`).join(",") + "\n";
+    
+    // 生成并下载文件
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "HD-Survey.csv";
     a.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(a.href);
 }
-window.onload=function(){
-    // 页面加载时先清理0库存
-    cleanZeroStock();
-    loadType();renderStock();renderRecord();
-}
-</script>
+
+// ========== 打印Word ==========
+function exportWord() {
+    const data = collectFormData();
+    const arrToStr = (arr) => Array.isArray(arr) ? arr.join("、") : "";
+    let html = `
+<html xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="utf-8">
+<title>HD-Survey</title>
+<style>
+body { font-family: "宋体"; font-size: 14px; line-height: 2.3; margin: 35px; }
+h1 { text-align: right; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+h2 { font-size: 18px; border-bottom: 1px solid #000; padding-bottom: 4px; margin: 22px 0 10px; }
+h3 { font-size: 16px; margin: 12px 0 6px; }
+.line { margin: 10px 0; }
+.box { border: 1px solid #000; padding: 2px 8px; margin: 0 5px; min-width: 100px; display: inline-block; }
+.contact-block { border: 1px dashed #888; padding: 10px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<h1>HD-Survey</h1>
+
+<h2>1 基本情况</h2>
+<div class="line">1.1 文化程度：<span class="box">${data.culture || ""}</span><br>
+文盲 ○ 小学 ○ 初中 ○ 高中或中专 ○ 大学或大专 ○ 研究生及以上</div>
+
+<div class="line">1.2 职业*：<span class="box">${data.job || ""}</span> 其他注明：<span class="box">${data.jobOther || ""}</span><br>
+幼托儿童 ○ 散居儿童 ○ 学生(大中小学) ○ 教师 ○ 保育员及保姆 ○ 餐饮食品业 ○ 商业服务<br>
+工人 ○ 民工 ○ 农民 ○ 牧民 ○ 渔(船)民 ○ 干部职员 ○ 离退人员 ○ 家务及待业 ○ 其他 ○ 不详</div>
+
+<div class="line">工作单位/学校：<span class="box">${data.workUnit || ""}</span></div>
+
+<div class="line">1.3 婚姻：○ 未婚 ○ 离异或丧偶 ○ 不详 ○ 已婚 ○ 同居</div>
+
+<div class="line">1.4 配偶或性伴<br>
+抗体检测：○ 未查/不详 ○ 阴性 ○ 阳性 检测年月：<span class="box">${data.partnerTestDate || ""}</span><br>
+近1年内性伴数量：○ 0人 ○ 1人 ○ 2人以上 ○ 5人以上<br>
+近1年内性伴是否阳性：○ 有 ○ 无 ○ 不清楚<br>
+是否有固定性伴：○ 有 ○ 无</div>
+
+<div class="line">1.5 子女<br>
+有无子女：○ 无 ○ 有；孕期检测：○ 阳性 ○ 阴性 ○ 未查/不详；子女检测结果：<span class="box">${data.childTest || ""}</span><br>
+子女检测类别：${arrToStr(data.childHas)}</div>
+
+<div class="line">1.6 药品使用<br>
+是否用过药物：○ 否 ○ 是 药物名称：<span class="box">${data.drugName || ""}</span><br>
+是否接受PEP暴露阻断：○ 否 ○ 是 阻断药物：<span class="box">${data.pepDrug || ""}</span></div>
+
+<div class="line" style="border:1px solid #000; padding:10px;">
+    <!-- 此处粘贴你原有1.1~1.7全部打印HTML代码 -->
+    <div class="line">1.7 检测CD4：○ 否 ○ 是 <span class="box">${data.cd4Num || ""}</span> 个/ul</div>
+
+    <div style="margin-top:12px;">
+    <h3>1.8 青年学生检测史</h3>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;">
+        <span>确诊前是否做过HIV检测：</span>
+        <span class="box">${data.stuHivTest || ""}</span>
+        <span>最近一次阴性时间：</span>
+        <span class="box">${data.stuLastNegTime || "/"}</span>
+    </div>
+</div>
+
+<h3>2.1 吸毒史</h3>
+<div class="line">
+目前吸毒方式：<span class="box">${data.drugWay || ""}</span><br>
+首次吸毒时间：<span class="box">${data.firstDrugTime || ""}</span> 首次注射吸毒时间：<span class="box">${data.firstInjectDrugTime || ""}</span><br>
+是否共用针具：${data.shareNeedle || ""} 共用针具人数：<span class="box">${data.shareNeedleNum || ""}</span><br>
+确诊前是否使用过成瘾性物质：<span class="box">${data.stuAddictSub || ""}</span><br>
+配偶或性伴是否吸毒：${data.partnerDrug || ""}
+</div>
+
+<h3>2.2 性接触史</h3>
+<div class="line">性行为类型：${arrToStr(data.sexBehavior)}<br>
+近1年非婚异性性伴人数：<span class="box">${data.heteroNum || ""}</span> 肛交人数：<span class="box">${data.analNum || ""}</span><br>
+最后一次性接触套情况：<span class="box">${data.lastSex || ""}</span> 备注：<span class="box">${data.lastSexRemark || ""}</span></div>
+<div class="line">
+上个月异性性行为(可多选)：${arrToStr(data.monthHetero)}<br>
+从不戴套：<span class="box">${data.monthNoCondomRemark || ""}</span> 有时戴套：<span class="box">${data.monthSometimesRemark || ""}</span> 每次都戴套：<span class="box">${data.monthAllRemark || ""}</span>
+</div>
+<div class="line">
+半年内肛交情况(可多选)：${arrToStr(data.halfYearAnal)}
+</div>
+<div class="line">
+性病史：<span class="box">${data.std || ""}</span>
+</div>
+
+<h3>2.3 受血史</h3>
+<div class="line">受血类别：${arrToStr(data.bloodType)}<br>
+首次受血时间：<span class="box">${data.firstBloodTime || ""}</span> 地点：<span class="box">${data.firstBloodAddr || ""}</span><br>
+末次受血时间：<span class="box">${data.lastBloodTime || ""}</span> 地点：<span class="box">${data.lastBloodAddr || ""}</span><br>
+术前输血住院：<span class="box">${data.bloodHospital || ""}</span></div>
+
+<h3>2.4 供血(浆)史</h3>
+<div class="line">有无供血(浆)史：<span class="box">${data.bloodDonate || ""}</span><br>
+首次全血时间：<span class="box">${data.firstWholeBloodTime || ""}</span> 地点：<span class="box">${data.firstWholeBloodAddr || ""}</span> 采血单位：<span class="box">${data.firstWholeBloodUnit || ""}</span><br>
+末次全血时间：<span class="box">${data.lastWholeBloodTime || ""}</span> 地点：<span class="box">${data.lastWholeBloodAddr || ""}</span> 采血单位：<span class="box">${data.lastWholeBloodUnit || ""}</span><br>
+首次血浆时间：<span class="box">${data.firstPlasmaTime || ""}</span> 地点：<span class="box">${data.firstPlasmaAddr || ""}</span> 采血单位：<span class="box">${data.firstPlasmaUnit || ""}</span><br>
+末次血浆时间：<span class="box">${data.lastPlasmaTime || ""}</span> 地点：<span class="box">${data.lastPlasmaAddr || ""}</span> 采血单位：<span class="box">${data.lastPlasmaUnit || ""}</span></div>
+
+<h3>2.5 职业暴露</h3>
+<div class="line">职业暴露情况：<span class="box">${data.exposeSrc || ""}</span> 暴露级别：<span class="box">${data.exposeLevel || ""}</span><br>
+是否药物阻断：○ 否 ○ 是 阻断药物名称：<span class="box">${data.blockDrugName || ""}</span></div>
+
+<h3>2.6 患儿填写项</h3>
+<div class="line">患儿母亲：<span class="box">${data.motherHiv || ""}</span> 病例报告卡号：<span class="box">${data.motherCardId || ""}</span><br>
+喂养方式：<span class="box">${data.feed || ""}</span><br>
+患儿是否接受母婴阻断药物治疗：<span class="box">${data.babyBlock || ""}</span></div>
+
+<h2>3 临床症状</h2>
+<!-- 新增外层边框，包裹3.1~3.3全部内容 -->
+<div style="border:1px solid #000; padding:12px;">
+    <div class="line">3.1 目前症状(可多选)：${arrToStr(data.symptomList)} 其他说明：<span class="box">${data.symptomOther || ""}</span></div>
+    <div class="line">3.2 既往有无相关症状：<span class="box">${data.symptomHistory || ""}</span></div>
+    <div class="line">3.3 密接有无相关症状：<span class="box">${data.closeContactSymptom || ""}</span></div>
+</div>
+
+<h2>4 人群类别</h2>
+<div class="line">人群类别：<span class="box">${data.crowd || ""}</span> 其他说明：<span class="box">${data.crowdOther || ""}</span></div>
+
+<h2>5 样本来源</h2>
+<div class="line">样本来源：<span class="box">${data.sample || ""}</span> 其他说明：<span class="box">${data.sampleOther || ""}</span></div>
+
+<h2>6 分析研判</h2>
+<div class="line">6.1 最可能感染途径：<span class="box">${data.infectWay || ""}</span> 其他注明：<span class="box">${data.infectWayOther || ""}</span></div>
+<div class="line">6.2 感染时间推断：<span class="box">${data.infectTime || ""}</span></div>
+<div class="line">6.3 感染地点推断：<span class="box">${data.infectArea || ""}</span></div>
+
+<h2>7 高危行为接触者</h2>
+<div class="block">
+    <div class="row">
+        <span>姓名：</span>
+        <span class="box">${data.partnerName || ""}</span>
+        <span>性别：</span>
+        <span class="box">${data.partnerSex || ""}</span>
+        <span>年龄(岁)：</span>
+        <span class="box">${data.partnerAge || ""}</span>
+        <span>接触方式：</span>
+        <span class="box">${data.partnerContactType || ""}</span>
+        <span>居住地：</span>
+        <span class="box">${data.partnerAddr || ""}</span>
+        <span>暴露地：</span>
+        <span class="box">${data.partnerExposePlace || ""}</span>
+    </div>
+    <div class="row">
+        <span>末次高危行为时间：</span>
+        <span class="box">${data.partnerLastRiskTime || ""}</span>
+        <span>备注：</span>
+        <span class="box">${data.surveyRemark || ""}</span>
+    </div>
+</div>
+
+<h2>8 其他高危行为接触者</h2>
+<div class="line">登记接触总人数：<span class="box">${data.contactCount || 0}</span> 人</div>
+`;
+    const contactArr = data.contactList || [];
+    contactArr.forEach((item, idx) => {
+        html += `
+<div class="contact-block">
+<h3>接触者${idx + 1}</h3>
+<div class="line">①接触方式：${item.contactType || "无"}</div>
+<div class="line">②姓名/外号：<span class="box">${item.name || ""}</span> 性别：<span class="box">${item.sex || ""}</span> 年龄：<span class="box">${item.age || ""}</span><br>
+联系电话：<span class="box">${item.tel || ""}</span> 社交帐号：<span class="box">${item.social || ""}</span></div>
+<div class="line">③居住地：<span class="box">${item.addr || ""}</span> 暴露地：<span class="box">${item.exposeAddr || ""}</span> 末次高危行为：<span class="box">${item.lastRisk || ""}</span></div>
+<div class="line">④告知方式：${item.notifyType || "无"} 授权备注：<span class="box">${item.notifyRemark || ""}</span></div>
+<div class="line">⑤追踪结局：${item.trackResult || "无"} 报告卡ID：<span class="box">${item.trackCardId || ""}</span></div>
+</div>`;
+    });
+    html += `
+<h2>9 青年学生</h2>
+<div class="line">
+    <div class="row">
+        <h3 style="margin:0 10px 0 0;">9.1 性行为</h3>
+        <span>确诊前是否发生过性行为：</span>
+        <span class="box">${data.stuSexHappened || ""}</span>
+    </div>
+    <div class="line">首次性行为年龄：同性 <span class="box">${data.stuFirstSameAge || "/"}</span> 岁，异性 <span class="box">${data.stuFirstDiffAge || "/"}</span> 岁</div>
+    <div class="line">首个性伴类别：同性 <span class="box">${data.stuFirstSamePartner || ""}</span>，异性 <span class="box">${data.stuFirstDiffPartner || ""}</span></div>
+    <div class="line">确诊前性伴人数：同性 <span class="box">${data.stuSameNum || "/"}</span> 人，商业性 <span class="box">${data.stuSameBusinessNum || "/"}</span> 人；异性 <span class="box">${data.stuDiffNum || "/"}</span> 人，商业性 <span class="box">${data.stuDiffBusinessNum || "/"}</span> 人</div>
+    <div class="line">确诊前性伴类型（同性）：<span class="box">${arrToStr(data.stuSamePartnerType)}</span></div>
+    <div class="line">确诊前性伴类型（异性）：<span class="box">${arrToStr(data.stuDiffPartnerType)}</span></div>
+    <div class="line">认识性伴方式：同性 <span class="box">${data.stuSameMeetWay || ""}</span>，异性 <span class="box">${data.stuDiffMeetWay || ""}</span></div>
+    <div class="line">主要结识方式：同性 <span class="box">${data.stuSameMainWay || ""}</span>，异性 <span class="box">${data.stuDiffMainWay || ""}</span></div>
+    <div class="line">同性安全套使用情况：<span class="box">${data.stuSameCondom || ""}</span></div>
+    <!-- 新增异性安全套打印行 -->
+    <div class="line">异性安全套使用情况：<span class="box">${data.stuDiffCondom || ""}</span></div>
+
+    <div class="row">
+        <h3 style="margin:0 10px 0 0;">9.2 吸毒史</h3>
+        <span>确诊前是否使用成瘾性物质：</span>
+        <span class="box">${data.stuAddictSub || ""}</span>
+    </div>
+</div>
+<div class="line" style="margin-top:30px;">
+被调查人配偶或性伴：<span class="box">${data.partnerName || ""}</span>
+性别：<span class="box">${data.partnerSex || ""}</span>
+年龄：<span class="box">${data.partnerAge || ""}</span>
+接触方式：<span class="box">${data.partnerContactType || ""}</span>
+居住地：<span class="box">${data.partnerAddr || ""}</span>
+暴露地：<span class="box">${data.partnerExposePlace || ""}</span>
+末次高危行为时间：<span class="box">${data.partnerLastRiskTime || ""}</span>
+备注：<span class="box">${data.surveyRemark || ""}</span>
+调查单位：<span class="box">${data.surveyUnit || ""}</span>
+调查人：<span class="box">${data.surveyUser || ""}</span>
+调查日期*：<span class="box">${data.surveyDate || ""}</span>
+</div>
 </body>
-</html>
+</html>`;
+    const blob = new Blob([html], { type: "application/msword" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "HD-Survey.doc";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+
+// ========== 导入CSV文件 ==========
+function importCsvFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+        alert("导入完成，基础信息已回填，高危接触者请重新输入数字生成条目");
+    }
+    reader.readAsText(file);
+    document.getElementById("fileInput").value = "";
+}
+
+// ========== 历史记录弹窗 ==========
+function openHistoryModal() {
+    const mask = document.getElementById("historyMask");
+    const listWrap = document.getElementById("historyList");
+    listWrap.innerHTML = "";
+    let records = JSON.parse(localStorage.getItem("hiv_dc_records") || "[]");
+    if (records.length === 0) {
+        listWrap.innerHTML = "<p>暂无历史调查记录</p>";
+    } else {
+        records.forEach((rec, idx) => {
+            const div = document.createElement("div");
+            div.className = "history-item";
+            const d = new Date(rec.createTime);
+            div.innerHTML = `
+                <div>记录${idx+1}｜被调查人：${rec.investigateeName || '未填写姓名'} — ${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}</div>
+                <div class="history-btn-group">
+                    <button class="edit-his" data-idx="${idx}">编辑填入表单</button>
+                    <button class="del-his" data-idx="${idx}">删除本条</button>
+                </div>
+            `;
+            listWrap.appendChild(div);
+        });
+        document.querySelectorAll(".edit-his").forEach(btn=>{
+            btn.addEventListener("click", ()=>{
+                fillFormData(records[Number(btn.dataset.idx)]);
+                mask.style.display = "none";
+            })
+        })
+        document.querySelectorAll(".del-his").forEach(btn=>{
+            btn.addEventListener("click", ()=>{
+                const i = Number(btn.dataset.idx);
+                if (!confirm("确定删除这条记录，删除后无法恢复！")) return;
+                records.splice(i, 1);
+                localStorage.setItem("hiv_dc_records", JSON.stringify(records));
+                openHistoryModal();
+            })
+        })
+    }
+    mask.style.display = "block";
+}
+function closeHistoryModal() {
+    document.getElementById("historyMask").style.display = "none";
+}
+
+// ========== 回填历史数据到表单 ==========
+function fillFormData(record) {
+    document.querySelectorAll("input").forEach(i => {
+        i.checked = false;
+        if (i.type !== "radio" && i.type !== "checkbox") i.value = "";
+    });
+    document.getElementById("contactBox").innerHTML = "";
+    const nameInput = document.getElementById('investigateeName');
+    if(nameInput) nameInput.value = record.investigateeName || "";
+    document.querySelectorAll('input[type="radio"]').forEach(rd => {
+        if (record[rd.name] === rd.value) rd.checked = true;
+    });
+    const ckKeys = ["sexBehavior", "childHas", "bloodType", "halfYearAnal", "monthHetero", "symptomList"];
+    ckKeys.forEach(key => {
+        const arr = record[key] || [];
+        document.querySelectorAll(`input[name="${key}"]`).forEach(cb => {
+            cb.checked = arr.includes(cb.value);
+        });
+    });
+    document.querySelectorAll('input[type="text"],input[type="date"],input[type="number"]').forEach(inp => {
+        if (inp.name && record[inp.name] !== undefined) inp.value = record[inp.name];
+    });
+    document.querySelectorAll('select').forEach(sel => {
+        if (sel.name && record[sel.name] !== undefined) sel.value = record[sel.name];
+    });
+    const cnt = Number(record.contactCount) || 0;
+    document.getElementById("contactCount").value = cnt;
+    createContactLine();
+    const list = record.contactList || [];
+    list.forEach((c, idx) => {
+        const line = document.querySelectorAll(`.contact-line`)[idx];
+        if (!line) return;
+        line.querySelector(`input[name="contactName${idx}"]`).value = c.name;
+        line.querySelector(`input[name="contactSex${idx}"]`).value = c.sex;
+        line.querySelector(`input[name="contactAge${idx}"]`).value = c.age;
+        line.querySelector(`input[name="contactTel${idx}"]`).value = c.tel;
+        line.querySelector(`input[name="contactSocial${idx}"]`).value = c.social;
+        line.querySelector(`input[name="contactAddr${idx}"]`).value = c.addr;
+        line.querySelector(`input[name="contactExposeAddr${idx}"]`).value = c.exposeAddr;
+        line.querySelector(`input[name="contactLastRisk${idx}"]`).value = c.lastRisk;
+        line.querySelector(`input[name="notifyRemark${idx}"]`).value = c.notifyRemark;
+        line.querySelector(`input[name="trackCardId${idx}"]`).value = c.trackCardId;
+        line.querySelectorAll(`input[name="contactType${idx}"]`).forEach(r => r.checked = r.value === c.contactType);
+        line.querySelectorAll(`input[name="notify${idx}"]`).forEach(r => r.checked = r.value === c.notifyType);
+        line.querySelectorAll(`input[name="track${idx}"]`).forEach(r => r.checked = r.value === c.trackResult);
+    });
+}
+
+// ========== 页面加载完成后统一绑定所有按钮（脚本最末尾，不能前移） ==========
+window.addEventListener("load", function(){
+    document.getElementById("btnSave").addEventListener("click", saveCurrentItem);
+    document.getElementById("btnExportExcel").addEventListener("click", exportExcel);
+    document.getElementById("btnExportWord").addEventListener("click", exportWord);
+    document.getElementById("btnImport").addEventListener("click", ()=>{
+        document.getElementById("fileInput").click();
+    });
+    document.getElementById("fileInput").addEventListener("change", importCsvFile);
+    document.getElementById("btnHistory").addEventListener("click", openHistoryModal);
+    document.getElementById("genBtn").addEventListener("click", createContactLine);
+    document.getElementById("btnClear").addEventListener("click", clearAllForm);
+});
+
+// 姓名：输完失焦再脱敏，导出保留完整真实姓名
+const nameInput = document.getElementById("investigateeName");
+
+// 1. 打字时：实时把完整原始姓名存在输入框的自定义属性里（导出读这里）
+nameInput.addEventListener("input", function() {
+    this.dataset.realName = this.value;
+});
+
+// 2. 录入结束（失去焦点）：页面显示脱敏效果，只改视觉、不改真实值
+nameInput.addEventListener("blur", function() {
+    const fullName = this.dataset.realName || this.value;
+    if (fullName.length >= 2) {
+        const nameArr = Array.from(fullName);
+        nameArr[1] = "*";
+        this.value = nameArr.join("");
+    }
+});
+
+// 3. 点击输入框恢复完整姓名方便修改
+nameInput.addEventListener("focus", function() {
+    this.value = this.dataset.realName || this.value;
+    this.setSelectionRange(this.value.length, this.value.length);
+});
+</script>
