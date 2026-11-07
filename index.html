@@ -271,15 +271,69 @@ function getMonthDiff(s,e){
     return m;
 }
 
-// 新增：清理库存中数量≤0的项
-function cleanZeroStock() {
-    const stock = getStorage(STOCK_KEY);
-    for (let k in stock) {
-        if (stock[k].num <= 0) {
-            delete stock[k];
+// 获取渲染用库存数据：只返回库存>0的，原始storage数据保留不变
+function getStockDisplayList() {
+  const stock = getStorage(STOCK_KEY) || {};
+  const arr = [];
+  for (const key in stock) {
+    const item = stock[key];
+    if (Number(item.num) > 0) {
+      arr.push({
+        id: key,
+        ...item
+      });
+    }
+  }
+  return arr;
+}
+
+// 【修改点】加载出库类别下拉，只加载库存>0的
+function loadType(){
+    const sel=document.getElementById("out_type");
+    sel.innerHTML="<option value=''>请选择类别</option>";
+    const stock=getStorage(STOCK_KEY);
+    const set=new Set();
+    for(let k in stock){
+        if(Number(stock[k].num) > 0){
+            set.add(stock[k].type);
         }
     }
-    setStorage(STOCK_KEY, stock);
+    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
+    document.getElementById("out_factory").innerHTML="<option value=''>请选择厂家</option>";
+    document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
+    clearOutValid();
+}
+// 【修改点】加载厂家，只当前类别下库存>0的
+function loadFactory(){
+    const t=trim(document.getElementById("out_type").value);
+    const sel=document.getElementById("out_factory");
+    sel.innerHTML="<option value=''>请选择厂家</option>";
+    const stock=getStorage(STOCK_KEY);
+    const set=new Set();
+    for(let k in stock){
+        if(stock[k].type===t && Number(stock[k].num) > 0){
+            set.add(stock[k].factory);
+        }
+    }
+    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
+    document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
+    clearOutValid();
+}
+// 【修改点】加载规格，只当前类别+厂家下库存>0的
+function loadSpec(){
+    const t=trim(document.getElementById("out_type").value);
+    const f=trim(document.getElementById("out_factory").value);
+    const sel=document.getElementById("out_spec");
+    sel.innerHTML="<option value=''>请选择规格</option>";
+    const stock=getStorage(STOCK_KEY);
+    const set=new Set();
+    for(let k in stock){
+        if(stock[k].type===t&&stock[k].factory===f && Number(stock[k].num) > 0){
+            set.add(stock[k].spec);
+        }
+    }
+    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
+    clearOutValid();
 }
 
 // 导出备份
@@ -308,8 +362,6 @@ function importAllData(dom){
             if(!confirm("导入覆盖现有数据？")){dom.value="";return;}
             setStorage(STOCK_KEY,data.stock);
             setStorage(RECORD_KEY,data.records);
-            // 导入后清理0库存
-            cleanZeroStock();
             loadType();renderStock();renderRecord();
             alert("导入成功");
         }catch(err){alert("文件损坏");}
@@ -339,39 +391,7 @@ function showStockAndValid(){
     if(stock[k])document.getElementById("out_valid_show").value=stock[k].validDate||"无";
     document.getElementById("show_stock").value=stock[k]?.num||0;
 }
-function loadType(){
-    const sel=document.getElementById("out_type");
-    sel.innerHTML="<option value=''>请选择类别</option>";
-    const stock=getStorage(STOCK_KEY);
-    const set=new Set();
-    for(let k in stock)set.add(stock[k].type);
-    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
-    document.getElementById("out_factory").innerHTML="<option value=''>请选择厂家</option>";
-    document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
-    clearOutValid();
-}
-function loadFactory(){
-    const t=trim(document.getElementById("out_type").value);
-    const sel=document.getElementById("out_factory");
-    sel.innerHTML="<option value=''>请选择厂家</option>";
-    const stock=getStorage(STOCK_KEY);
-    const set=new Set();
-    for(let k in stock)if(stock[k].type===t)set.add(stock[k].factory);
-    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
-    document.getElementById("out_spec").innerHTML="<option value=''>请选择规格</option>";
-    clearOutValid();
-}
-function loadSpec(){
-    const t=trim(document.getElementById("out_type").value);
-    const f=trim(document.getElementById("out_factory").value);
-    const sel=document.getElementById("out_spec");
-    sel.innerHTML="<option value=''>请选择规格</option>";
-    const stock=getStorage(STOCK_KEY);
-    const set=new Set();
-    for(let k in stock)if(stock[k].type===t&&stock[k].factory===f)set.add(stock[k].spec);
-    set.forEach(x=>sel.innerHTML+=`<option value="${x}">${x}</option>`);
-    clearOutValid();
-}
+
 function clearInInput(){
     ["in_type","in_factory","in_spec","in_num","in_valid_date","in_note"].forEach(id=>document.getElementById(id).value="");
     editKey="";
@@ -400,8 +420,6 @@ function stockIn(){
     if(editKey&&editKey!==key)delete stock[editKey];
     stock[key]={type:t,factory:f,spec:spec,num:num,validDate:valid};
     setStorage(STOCK_KEY,stock);
-    // 入库后清理0库存
-    cleanZeroStock();
     const records=getStorage(RECORD_KEY);
     records.unshift({
         time:formatShow(""),rawTime:getNowDate(),
@@ -429,11 +447,8 @@ function stockOut(){
         const key=`${t}_${f}_${spec}`;
         const stock=getStorage(STOCK_KEY);
         stock[key].num-=num;
-        // 确保库存为0时删除
-        if(stock[key].num <= 0) delete stock[key];
+        // ✅ 不再删除，库存保留为0
         setStorage(STOCK_KEY,stock);
-        // 出库后清理0库存
-        cleanZeroStock();
         const records=getStorage(RECORD_KEY);
         records.unshift({
             time:formatShow(dVal),rawTime:dVal||getNowDate(),
@@ -453,14 +468,12 @@ function delRec(idx){
     const stock=getStorage(STOCK_KEY);
     if(!confirm("删除本条记录，库存同步回滚？"))return;
     if(item.opt==="入库"){
-        if(stock[k]){stock[k].num-=item.num;if(stock[k].num<=0)delete stock[k];}
+        if(stock[k]){stock[k].num-=item.num;}
     }else{
         if(!stock[k])stock[k]={type:item.type,factory:item.factory,spec:item.spec,num:0,validDate:item.validDate};
         stock[k].num+=item.num;
     }
     setStorage(STOCK_KEY,stock);
-    // 删除记录后清理0库存
-    cleanZeroStock();
     records.splice(idx,1);
     setStorage(RECORD_KEY,records);
     renderStock();renderRecord();loadType();
@@ -509,7 +522,6 @@ function saveEditRecord(){
     if(old.opt==="入库"){
         if(stock[oldKey]){
             stock[oldKey].num-=old.num;
-            if(stock[oldKey].num<=0) delete stock[oldKey];
         }
     }else{
         if(!stock[oldKey]) stock[oldKey]={type:old.type,factory:old.factory,spec:old.spec,num:0,validDate:old.validDate};
@@ -535,11 +547,8 @@ function saveEditRecord(){
     }else{
         if(stock[newKey].num<num){alert("库存不足");return;}
         stock[newKey].num-=num;
-        if(stock[newKey].num<=0) delete stock[newKey];
     }
     setStorage(STOCK_KEY,stock);
-    // 编辑后清理0库存
-    cleanZeroStock();
     records[idx]={
         time:formatShow(dVal),rawTime:dVal||getNowDate(),
         type:t,factory:f,spec:spec,num:num,validDate:valid,
@@ -549,16 +558,14 @@ function saveEditRecord(){
     closeEditModal();renderStock();renderRecord();loadType();
     alert("修改完成");
 }
+
 // 渲染库存（无操作按钮）
 function renderStock(){
-    // 渲染前先清理0库存
-    cleanZeroStock();
     const today=getNowDate();
-    const stock=getStorage(STOCK_KEY);
+    const stockList = getStockDisplayList();
     const tbody=document.querySelector("#stock_table tbody");
     tbody.innerHTML="";
-    for(let k in stock){
-        const item=stock[k];
+    stockList.forEach(item=>{
         const num=item.num;
         const vd=item.validDate;
         let vText="-",vCls="";
@@ -575,8 +582,9 @@ function renderStock(){
             <td class="${num<100?'low-stock':''}">${num}</td>
             <td class="${vCls}">${vText}</td>
         </tr>`;
-    }
+    })
 }
+
 // 渲染记录（保留操作）
 function renderRecord(){
     const records=getStorage(RECORD_KEY);
@@ -624,8 +632,6 @@ function exportRecord(){
     URL.revokeObjectURL(url);
 }
 window.onload=function(){
-    // 页面加载时先清理0库存
-    cleanZeroStock();
     loadType();renderStock();renderRecord();
 }
 </script>
